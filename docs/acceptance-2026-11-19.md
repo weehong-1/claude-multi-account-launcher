@@ -51,6 +51,14 @@ Windows App SDK runtime of ours, no VC++ redistributable, no Claude.
 Not yet shown on a clean PC: that the app starts and runs with nothing
 else installed. That needs a clean PC with Smart App Control off.
 
+## Tried and dropped: Google sign-in in a profile
+
+A "Finish Google sign-in" menu item (copy the callback link from the
+browser, hand it to the profile) was built and reverted the same day. The
+hand-off itself worked with a test link, but Vernon found the sign-in
+page's `Open Claude` button has no link to copy: it is a script button.
+Email sign-in is the supported way (spec FR-4).
+
 ## Open items
 
 1. **#6**: after the next Claude Desktop update, check that `Claude - *`
