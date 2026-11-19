@@ -4,7 +4,7 @@
 - Against: [spec section 7](spec-2026-11-19-claude-multi-account-launcher.md#7-acceptance-criteria)
 - Build: branch `feat/launcher`, Windows 11 Pro 10.0.26300, Claude
   Desktop MSIX 6.6395.0.0, .NET SDK 11.0.100, Windows App SDK 2.7.0
-- Automated tests: 100 passing (`dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests`)
+- Automated tests: 115 passing (`dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests`)
 - Revised 2026-11-19 after FR-4 was rewritten (email sign-in, nothing
   closed, no stored status)
 
@@ -50,6 +50,17 @@ Windows App SDK runtime of ours, no VC++ redistributable, no Claude.
 
 Not yet shown on a clean PC: that the app starts and runs with nothing
 else installed. That needs a clean PC with Smart App Control off.
+
+## Google sign-in through Finish Google sign-in (FR-4)
+
+- Routing: Pass. With a harmless `claude://login/cmal-routing-test` on the
+  clipboard and a test profile running, the launcher started
+  `--user-data-dir=...\Claude-link-test -- claude://login/cmal-routing-test`;
+  that process handed off and exited, the profile's main process stayed
+  the same, and no new Default instance appeared. Clipboard cleared after
+- Without a link on the clipboard: shows the four steps instead
+- **Not verified yet:** that Claude completes a real Google sign-in when
+  it receives the link this way. Needs one real sign-in by Vernon
 
 ## Open items
 

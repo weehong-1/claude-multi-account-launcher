@@ -70,13 +70,18 @@ Smart App Control settings**. If it's **On** or **Evaluation**, set it to
 - **Add profile**: give it a name, e.g. "Personal", then choose **Open
   Claude**. A new Claude window opens next to the one you have; nothing is
   closed.
-- **Sign in with "Continue with email"**, not "Continue with Google".
-  Google sign-in comes back through a `claude://` link that Windows always
-  hands to your Default Claude, so it would sign in there instead. Email
-  sign-in also works for accounts created with Google.
+- **Sign in with "Continue with email"**: simplest, and it also works for
+  accounts created with Google.
+- **Or with Google**, one extra step. Google sign-in comes back through a
+  `claude://` link that Windows always hands to your Default Claude, so:
+  1. In the profile's window choose **Continue with Google** and sign in.
+  2. When the browser asks **"Open Claude?"**, choose **Cancel**.
+  3. Right-click the page's **Open Claude** button → **Copy link address**.
+  4. In the launcher: the profile's **⋯ → Finish Google sign-in…**. It
+     hands the link to that profile's window and clears the clipboard.
 - **Launch**: opens the profile, or brings it to the front if it's already
   running. Several profiles can run at once.
-- **⋯ menu**: Create desktop shortcut, Rename, Remove. Remove asks a
+- **⋯ menu**: Create desktop shortcut, Finish Google sign-in, Rename, Remove. Remove asks a
   second time before deleting the profile's folders; keeping them is the
   default. A profile can't be removed while it's running.
 - **Desktop shortcut** `Claude - <name>` opens that profile in one click,

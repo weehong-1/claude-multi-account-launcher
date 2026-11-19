@@ -12,14 +12,19 @@ public sealed class ClaudeLauncher(LauncherPaths paths)
     /// Starts Claude. <paramref name="profile"/> null means the built-in Default profile.
     /// If that profile is already running, Claude's own single-instance lock brings it to the front.
     /// </summary>
-    public Process? Launch(ClaudeInstall install, Profile? profile)
+    /// <param name="link">
+    /// Optional claude:// link to hand to that instance, e.g. a Google sign-in callback (FR-4).
+    /// Passed the way Windows passes it to Default (<c>-- "claude://..."</c>), so a running
+    /// profile instance receives it through Claude's own single-instance hand-off.
+    /// </param>
+    public Process? Launch(ClaudeInstall install, Profile? profile, SignInLink? link = null)
     {
         if (profile is not null)
         {
             EnsureFolders(profile.Slug);
         }
 
-        return Process.Start(BuildStartInfo(install, profile));
+        return Process.Start(BuildStartInfo(install, profile, link));
     }
 
     /// <summary>
@@ -33,7 +38,7 @@ public sealed class ClaudeLauncher(LauncherPaths paths)
         Directory.CreateDirectory(paths.ConfigFolder(slug));
     }
 
-    public ProcessStartInfo BuildStartInfo(ClaudeInstall install, Profile? profile)
+    public ProcessStartInfo BuildStartInfo(ClaudeInstall install, Profile? profile, SignInLink? link = null)
     {
         var psi = new ProcessStartInfo(install.LaunchPath)
         {
@@ -50,6 +55,13 @@ public sealed class ClaudeLauncher(LauncherPaths paths)
         {
             psi.ArgumentList.Add("--user-data-dir=" + paths.DataFolder(profile.Slug));
             psi.Environment[ConfigDirVariable] = paths.ConfigFolder(profile.Slug);
+        }
+
+        if (link is not null)
+        {
+            // Same shape as the MSIX protocol handler: Parameters="-- &quot;%1&quot;"
+            psi.ArgumentList.Add("--");
+            psi.ArgumentList.Add(link.Value);
         }
 
         return psi;
