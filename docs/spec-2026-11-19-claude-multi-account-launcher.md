@@ -23,9 +23,14 @@ with one click, instead of running commands or batch files by hand.
 - Claude Code sessions started from Desktop read `~/.claude` unless
   `CLAUDE_CONFIG_DIR` is set in the launch environment, so each profile
   also gets its own `CLAUDE_CONFIG_DIR`.
-- First sign-in caveat: sign-in returns through a `claude://` link and
-  Windows hands it to whichever Claude is already running. A new profile
-  must be signed in while no other Claude process is running.
+- First sign-in caveat (verified 2026-11-19): **Continue with Google**
+  returns through a `claude://` link. Windows always opens it as
+  `Claude.exe -- "claude://..."` from the MSIX package, with no
+  `--user-data-dir`, so it lands in the Default instance (starting one
+  if needed), never in the profile. Closing other Claude windows does not
+  help, and a per-user `HKCU\Software\Classes\claude` handler is ignored
+  in favour of the package's. **Continue with email** signs in inside the
+  profile's own window and works, also for accounts created with Google
 - Exe location:
   - MSIX install (current): package family `Claude_pzs8sxrjxfjjc`.
     - Execution alias: `%LOCALAPPDATA%\Microsoft\WindowsApps\claude-desktop.exe`
@@ -70,10 +75,8 @@ with one click, instead of running commands or batch files by hand.
 - Window shows one row per profile: display name, status, Launch button
 - A built-in "Default" profile launches Claude with no
   `--user-data-dir` (the existing account). It cannot be removed
-- Status values:
-  - `Not signed in yet` (new profile, first sign-in not confirmed)
-  - `Ready`
-  - `Running` (see FR-7)
+- Status: `Running` or `Not running` (FR-7). No sign-in state is stored:
+  the launcher can't see it, and asking the user added a step for nothing
 
 ### FR-2 Add profile
 
@@ -83,8 +86,8 @@ with one click, instead of running commands or batch files by hand.
   - Data: `%APPDATA%\Claude-<slug>` (directly under `%APPDATA%`, see section 8)
   - Claude Code config: `%USERPROFILE%\.claude-<slug>`
 - Create folders if missing, in the real `%APPDATA%` and `%USERPROFILE%`
-  (the launcher is unpackaged, so it is not redirected). New profile
-  status: `Not signed in yet`
+  (the launcher is unpackaged, so it is not redirected)
+- Then offer to open it for sign-in (FR-4)
 - Slug `default` is reserved for the built-in Default profile
 
 ### FR-3 Launch (one click)
@@ -99,26 +102,18 @@ with one click, instead of running commands or batch files by hand.
 - Launching a profile that is already running only brings Claude to
   the front (Claude's own single-instance behaviour handles this)
 
-### FR-4 First sign-in flow
+### FR-4 First sign-in
 
-- When launching a `Not signed in yet` profile:
-  1. If any Claude Desktop process is running, show a dialog explaining
-     that all Claude windows must close for sign-in to work, with
-     buttons `Close Claude and continue` / `Cancel`
-  2. On confirm, end all Claude Desktop processes, wait until they are
-     gone
-     - Identify them by executable path (the resolved Claude Desktop
-       install folder from FR-6), never by process name alone: the
-       Claude Code CLI is also `claude.exe` and must not be killed.
-       The CLI that Desktop bundles runs from
-       `%LOCALAPPDATA%\Claude-Data\claude_pzs8sxrjxfjjc\claude-code\...\claude.exe`
-     - For MSIX, match any `Claude_*__pzs8sxrjxfjjc` package folder, so a
-       process still running from the previous version after an update
-       is included
-  3. Launch the new profile only
-  4. Show a dialog: "Signed in successfully?" `Yes` / `Not yet`
-  5. `Yes` sets status to `Ready`
-- User can also reset a profile to `Not signed in yet` from its menu
+Revised 2026-11-19 after a real test: the original flow (close every
+Claude, launch the profile alone, ask "Signed in?") could not work,
+because Google sign-in always returns to Default (section 2).
+
+- Right after Add, one dialog: `Open Claude` / `Later`. It says that
+  Claude opens next to the current one and nothing is closed, and to
+  sign in with **Continue with email**, not Google
+- `Open Claude` launches the profile per FR-3. The user signs in there
+- Nothing is ever closed, and there is no "signed in?" question. Launch
+  works the same for every profile, first time or not
 
 ### FR-5 Rename and remove
 
@@ -129,7 +124,7 @@ with one click, instead of running commands or batch files by hand.
 ### FR-6 Exe resolution
 
 - Result has two parts: the launch path, and the install folder used to
-  recognise Claude Desktop processes (FR-4, FR-7)
+  recognise Claude Desktop processes (FR-7)
 - Try in order:
   1. MSIX alias `claude-desktop.exe` (section 2). Its install folder is
      the package location from the package manager (family
@@ -142,8 +137,13 @@ with one click, instead of running commands or batch files by hand.
 ### FR-7 Running indicator
 
 - Detect running profiles by reading Claude Desktop process command
-  lines (same executable-path filter as FR-4) for
-  `--user-data-dir=<data folder>`; no flag means Default
+  lines for `--user-data-dir=<data folder>`; no flag means Default
+- Pick Claude Desktop processes by executable path (the install folder
+  from FR-6), never by name alone: the Claude Code CLI is also
+  `claude.exe` (Desktop's bundled CLI runs from
+  `%LOCALAPPDATA%\Claude-Data\claude_pzs8sxrjxfjjc\claude-code\...\claude.exe`).
+  For MSIX, match any `Claude_*__pzs8sxrjxfjjc` package folder, so a
+  process from the previous version after an update still counts
 - Only main processes count. Electron child processes carry `--type=`
   and are skipped
 - Refresh when the window gets focus
@@ -160,7 +160,8 @@ with one click, instead of running commands or batch files by hand.
 ## 5. Storage
 
 - Profile list: `%APPDATA%\claude-multi-account-launcher\profiles.json`
-- Fields per profile: `name`, `slug`, `status`, `createdAt`
+- Fields per profile: `name`, `slug`, `createdAt` (a `status` field from
+  the first build is ignored when read and dropped on the next save)
 - No secrets, tokens or passwords stored anywhere
 
 ## 6. Non-functional
@@ -182,8 +183,9 @@ with one click, instead of running commands or batch files by hand.
 ## 7. Acceptance criteria
 
 - [ ] Adding "Personal" creates both folders and a list row
-- [ ] First launch of "Personal" closes running Claude after confirm,
-      opens a fresh Claude, sign-in completes, status becomes `Ready`
+- [ ] After adding "Personal", `Open Claude` opens it next to the running
+      Claude without closing anything, and email sign-in completes in
+      that window
 - [ ] With "Default" and "Personal" both running, each window shows
       its own account and chat history
 - [ ] Claude Code sessions in "Personal" write to `.claude-personal`
@@ -193,7 +195,7 @@ with one click, instead of running commands or batch files by hand.
       next window focus
 - [ ] Removing a profile keeps its folders unless deletion is confirmed
 - [ ] Works on both MSIX and standalone installs
-- [ ] FR-4 leaves a running Claude Code CLI session untouched
+- [ ] The Claude Code CLI is never counted as a running profile (FR-7)
 
 ## 8. Known risks
 
@@ -201,7 +203,11 @@ with one click, instead of running commands or batch files by hand.
 - Claude's own update relaunch has been reported to drop
   `CLAUDE_CONFIG_DIR` (sessions fall back to `~/.claude`). After an
   update, relaunch the profile from this app
-- Connectors (GitLab, Vilix, etc.) must be reconnected per profile
+- Connectors (GitLab, Vilix, etc.) must be reconnected per profile.
+  Connectors that finish their sign-in through a `claude://` link will
+  hit the same problem as Google sign-in and land in Default (not yet
+  tested)
+- Google sign-in can't be used in a profile (section 2); email only
 - Cowork's VM service looks for its image at
   `%APPDATA%\<data folder name>\vm_bundles`, ignoring
   `--user-data-dir`. So each data folder must sit directly under
@@ -222,8 +228,9 @@ with one click, instead of running commands or batch files by hand.
   No first sign-in handling, MSIX installs only
 - LemongrassSteak/claude-accounts (MIT, WinForms, .NET 10, v0.1.0):
   routes `claude://` sign-in by temporarily rewriting the per-user
-  registry handler. Not adopted here; FR-4 closes other Claude
-  processes instead
+  registry handler. Tested here 2026-11-19 against the MSIX install:
+  Windows ignores the per-user handler and uses the package's, so it
+  doesn't help. Email sign-in is used instead (FR-4)
 
 ## 9. Open questions
 

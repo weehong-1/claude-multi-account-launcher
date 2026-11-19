@@ -4,28 +4,29 @@
 - Against: [spec section 7](spec-2026-11-19-claude-multi-account-launcher.md#7-acceptance-criteria)
 - Build: branch `feat/launcher`, Windows 11 Pro 10.0.26300, Claude
   Desktop MSIX 6.6395.0.0, .NET SDK 11.0.100, Windows App SDK 2.7.0
-- Automated tests: 95 passing (`dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests`)
+- Automated tests: 87 passing (`dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests`)
+- Revised 2026-11-19 after FR-4 was rewritten (email sign-in, nothing
+  closed, no stored status)
 
 How each item was checked:
 
 - **UI run**: the real window driven through UI Automation on this PC
-- **Manual**: Vernon, by hand. These steps close Claude Desktop, which
-  hosts the Claude Code session that built this, so they couldn't be
-  automated
+- **Manual**: Vernon, by hand. Signing in can't be automated: Claude
+  can't control its own window
 - **Tests**: unit or integration tests in the repo
 
 | # | Criterion | Status | How |
 |---|---|---|---|
 | 1 | Adding "Personal" creates both folders and a list row | Pass | UI run (Phase 2): added a profile; `%APPDATA%\Claude-<slug>`, `%USERPROFILE%\.claude-<slug>` and the row appeared; tests |
-| 2 | First launch closes running Claude after confirm, opens a fresh Claude, sign-in completes, status becomes `Ready` | Pass (manual) | Manual (after Phase 3): Vernon reported the sign-in flow tested. UI run covered the confirm dialog and Cancel (no process closed) |
-| 3 | "Default" and "Personal" both running, each shows its own account and history | Pass (manual) | Manual (after Phase 3, step 4 of the test list) |
-| 4 | Claude Code sessions in "Personal" write to `.claude-personal` | Pass (manual) | Manual (after Phase 3, step 5). Spike confirmed `CLAUDE_CONFIG_DIR` reaches the Claude process through the MSIX alias |
-| 5 | Desktop shortcut for "Personal" opens that profile in one click | Pass | UI run (Phase 4): shortcut created from the menu; double-clicking the Default shortcut started Claude with no launcher window, in about 1 s; a not-signed-in profile's shortcut opened the sign-in flow. Ready-profile path: tests |
+| 2 | After adding "Personal", `Open Claude` opens it next to the running Claude without closing anything, and email sign-in completes there | Pass (manual) | Manual 2026-11-19: profile opened beside Default, signed in with Continue with email in its own window. The **original** flow (close all Claude, then sign in) **failed** in the same test: Google sign-in's `claude://` link started a new Default instance, seen in its command line (`Claude.exe -- "claude://login/google-auth?..."`, no `--user-data-dir`). An earlier "Pass" recorded here was based on a report, not this test, and was wrong |
+| 3 | "Default" and "Personal" both running, each shows its own account and history | Pass (manual) | Manual 2026-11-19: both windows open at once, Default on the original account and the profile on the other one |
+| 4 | Claude Code sessions in "Personal" write to `.claude-personal` | **Not verified** | Spike confirmed `CLAUDE_CONFIG_DIR` reaches the Claude process through the MSIX alias; no Claude Code session has been run in a profile yet |
+| 5 | Desktop shortcut for "Personal" opens that profile in one click | Pass | UI run (Phase 4): shortcut created from the menu; double-clicking the Default shortcut started Claude with no launcher window, in about 1 s. Profile path: tests |
 | 6 | Shortcut icon still shows after a Claude Desktop update | **Open** | Design only: the icon is a copy in `%APPDATA%\claude-multi-account-launcher\claude.ico`, not a path into the versioned MSIX folder; tests confirm the copy is reused when Claude can't be found. Needs a real Claude update to confirm |
 | 7 | Running profiles show `Running`; closing Claude clears it on next window focus | Pass | UI run (Phase 2): launched a profile, row showed Running; closed it, refocused, row went back |
 | 8 | Removing a profile keeps its folders unless deletion is confirmed | Pass | Tests (keep by default, delete, locked-file reporting); UI run: "Keep folders" is the default button, Delete removed all folders |
 | 9 | Works on both MSIX and standalone installs | **Partly** | MSIX: everything above. Standalone: lookup order and process matching covered by tests only; no standalone install was available |
-| 10 | FR-4 leaves a running Claude Code CLI session untouched | Pass | Read-only run against all real `claude.exe` processes: 15 Desktop processes picked, 3 CLI processes kept, path re-checked on the handle that would be terminated; tests. Not watched live with a terminal session during a real close |
+| 10 | The Claude Code CLI is never counted as a running profile | Pass | Read-only run against all real `claude.exe` processes: 15 Desktop processes picked, 3 CLI processes excluded; tests. (The launcher no longer closes any process, so the old "CLI survives a close" check no longer applies) |
 
 ## Clean-PC test (Windows Sandbox, v0.1.0 release files)
 
@@ -55,5 +56,7 @@ else installed. That needs a clean PC with Smart App Control off.
    desktop shortcuts still show Claude's icon.
 2. **#9**: if a standalone install is ever available, run add → sign in →
    launch once on it.
-3. **#10, live**: during a real sign-in flow, keep `claude` running in
-   Windows Terminal and confirm it survives.
+3. **#4**: start a Claude Code session inside a profile and check it
+   writes to `%USERPROFILE%\.claude-<slug>`.
+4. Connectors in a profile: check whether their sign-in also returns
+   through `claude://` and lands in Default (spec section 8).

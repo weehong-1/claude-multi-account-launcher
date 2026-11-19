@@ -62,12 +62,10 @@ public sealed partial class ProfileRow : INotifyPropertyChanged
         }
     }
 
-    public bool IsNotSignedIn => !IsRunning && _profile?.Status == ProfileStatus.NotSignedIn;
+    public bool IsNotRunning => !IsRunning;
 
-    public bool IsReady => !IsRunning && !IsNotSignedIn;
-
-    /// <summary>Spec FR-1 wording. Running wins over the stored status.</summary>
-    public string StatusText => IsRunning ? "Running" : IsNotSignedIn ? "Not signed in yet" : "Ready";
+    /// <summary>FR-1: only whether it is running; there is no stored sign-in state.</summary>
+    public string StatusText => IsRunning ? "Running" : "Not running";
 
     /// <summary>False while Claude Desktop can't be found (FR-6).</summary>
     public bool CanLaunch
@@ -86,17 +84,12 @@ public sealed partial class ProfileRow : INotifyPropertyChanged
     /// <summary>Removing is blocked while running so folders are never deleted under Claude.</summary>
     public bool CanRemove => IsCustom && !IsRunning;
 
-    /// <summary>Only a Ready profile can be put back to Not signed in yet.</summary>
-    public bool CanResetSignIn => _profile?.Status == ProfileStatus.Ready;
-
     private void OnStatusChanged()
     {
         OnPropertyChanged(nameof(IsRunning));
-        OnPropertyChanged(nameof(IsNotSignedIn));
-        OnPropertyChanged(nameof(IsReady));
+        OnPropertyChanged(nameof(IsNotRunning));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(CanRemove));
-        OnPropertyChanged(nameof(CanResetSignIn));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>

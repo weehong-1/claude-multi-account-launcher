@@ -14,8 +14,10 @@
       Scope="perUser"
       Compressed="yes">
 
-    <!-- Installing a newer version replaces the old one; never two entries in Apps -->
-    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <!-- Installing a newer version replaces the old one; never two entries in Apps.
+         Same-version rebuilds replace too, so a release can be rebuilt without a version bump. -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
     <Icon Id="AppIcon.ico" SourceFile="$(AssetsDir)AppIcon.ico" />

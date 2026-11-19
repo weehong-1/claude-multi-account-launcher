@@ -59,12 +59,12 @@ public sealed class ProfileService(ProfileStore store, LauncherPaths paths, Time
     /// <summary>The slug a new profile with this name would get.</summary>
     public string PreviewSlug(string name) => SlugGenerator.Create(name.Trim(), _profiles.Select(p => p.Slug));
 
-    /// <summary>Creates both folders and saves the new profile as Not signed in yet.</summary>
+    /// <summary>Creates both folders and saves the new profile.</summary>
     public Profile Add(string name)
     {
         ThrowIfInvalid(name);
 
-        var profile = new Profile(name.Trim(), PreviewSlug(name), ProfileStatus.NotSignedIn, _clock.GetLocalNow());
+        var profile = new Profile(name.Trim(), PreviewSlug(name), _clock.GetLocalNow());
         Directory.CreateDirectory(paths.DataFolder(profile.Slug));
         Directory.CreateDirectory(paths.ConfigFolder(profile.Slug));
 
@@ -81,13 +81,6 @@ public sealed class ProfileService(ProfileStore store, LauncherPaths paths, Time
         var renamed = existing with { Name = newName.Trim() };
         Save(_profiles.Select(p => p.Slug == slug ? renamed : p));
         return renamed;
-    }
-
-    public Profile SetStatus(string slug, ProfileStatus status)
-    {
-        var updated = Require(slug) with { Status = status };
-        Save(_profiles.Select(p => p.Slug == slug ? updated : p));
-        return updated;
     }
 
     /// <summary>Folders that belong to a profile, for display and deletion. Existing ones only.</summary>
