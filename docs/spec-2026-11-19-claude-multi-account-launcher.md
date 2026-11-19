@@ -165,6 +165,30 @@ because Google sign-in always returns to Default (section 2).
   `profiles.json`. Do not point at the MSIX `Claude.exe`: its versioned
   folder is deleted on every Claude update and the icon goes blank
 
+### FR-9 Uninstall and remove everything (added 2026-11-19)
+
+Software installed on someone's PC must also be removable from it.
+
+- Launcher options (⋯) → `Uninstall and remove everything…`
+- If any profile is running, stop and ask to close those Claude windows
+  first (deleting a running profile's folders would fail or corrupt it)
+- Otherwise list everything before deleting anything: each profile's data
+  folder (plus the MSIX-redirected copy, if any) and config folder, every
+  `Claude - *` desktop shortcut the launcher made (including ones for
+  removed profiles), the launcher's own folder (`profiles.json`, icon),
+  the installed app, and the unpacked runtime under `%TEMP%\.net`
+- `%APPDATA%\Claude-*` / `%USERPROFILE%\.claude-*` folders not in the
+  profile list (e.g. kept after Remove) are listed separately and only
+  deleted if the user ticks them
+- Buttons `Remove everything` / `Cancel`; Cancel is the default
+- Never touch the Default profile's data (it is Claude's own)
+- After deleting, exit. A detached command then uninstalls the MSI
+  (`msiexec /x <product code> /passive`, found by the upgrade code) and
+  removes the unpacked runtime, which can't be deleted while running
+- Portable exe: same, except no MSI; the user is told to delete the exe
+- Uninstalling from Settings → Apps stays conservative: it removes only
+  what the MSI installed, so an upgrade can never delete accounts
+
 ## 5. Storage
 
 - Profile list: `%APPDATA%\claude-multi-account-launcher\profiles.json`
@@ -204,6 +228,8 @@ because Google sign-in always returns to Default (section 2).
 - [ ] Removing a profile keeps its folders unless deletion is confirmed
 - [ ] Works on both MSIX and standalone installs
 - [ ] The Claude Code CLI is never counted as a running profile (FR-7)
+- [ ] `Uninstall and remove everything…` removes every listed item and
+      the installed app, and leaves the Default profile untouched (FR-9)
 
 ## 8. Known risks
 

@@ -28,9 +28,7 @@ Download from [Releases](https://github.com/weehong-1/claude-multi-account-launc
   `%LOCALAPPDATA%\Programs\claude-multi-account-launcher\`
 - Adds **Claude Multi-Account Launcher** to the Start menu and opens it
 - To update, run the newer MSI; it replaces the old version
-- To uninstall: Settings → Apps → Installed apps. Your profiles, their
-  Claude data and desktop shortcuts are left in place; remove profiles in
-  the launcher first if you want those gone too
+- To uninstall, see [Uninstall](#uninstall)
 
 **Portable:** download `claude-multi-account-launcher.exe` and put it in a
 folder it will stay in. Desktop shortcuts point at the exe's location, so
@@ -77,6 +75,32 @@ Smart App Control settings**. If it's **On** or **Evaluation**, set it to
   picks up a Claude started elsewhere within a few seconds while the
   launcher is on screen. If Claude stays in the background after you
   close its window, it still counts as running.
+
+## Uninstall
+
+**Remove everything:** in the launcher, **⋯ (next to Add profile) →
+Uninstall and remove everything…**
+
+1. Close the Claude windows of your profiles first; the launcher asks if
+   any are still open.
+2. It lists everything it will delete: each profile's Claude data and
+   Claude Code settings, its desktop shortcuts, its own settings, the
+   installed app and its unpacked files in `%TEMP%`. Folders of profiles
+   you removed earlier with "Keep folders" are listed separately; tick
+   them to delete those too.
+3. Choose **Remove everything**. The launcher deletes the files, closes,
+   and then uninstalls itself.
+
+Your **Default** Claude account and its data are never touched. Deleted
+profiles' sign-ins and chats can't be recovered on this PC (chats stay in
+the account online).
+
+If you ran the portable exe, it tells you to delete that file yourself at
+the end.
+
+**Remove only the app:** Settings → Apps → Installed apps → Claude
+Multi-Account Launcher → Uninstall. This keeps your profiles and their
+data, so reinstalling picks them up again.
 
 ## Where things live
 
