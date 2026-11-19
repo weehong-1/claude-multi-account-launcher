@@ -57,22 +57,18 @@ Smart App Control settings**. If it's **On** or **Evaluation**, set it to
 ## Use
 
 - **Default** is your existing Claude account. It is always there.
-- **Add profile**: give it a name, e.g. "Personal". The launcher creates
-  two folders for it (see below). Its status is *Not signed in yet*.
-- **Launch** a *Not signed in yet* profile to sign in:
-  1. The launcher asks to close every Claude Desktop window. Sign-in comes
-     back through a `claude://` link, and Windows sends that link to
-     whichever Claude is already running.
-  2. It closes Claude Desktop and opens a fresh Claude for the new profile.
-     Claude Code running in a terminal is not touched. Claude Code
-     sessions inside Claude Desktop stop with it.
-  3. Sign in, come back, and answer **Yes**. The profile becomes *Ready*.
-- **Launch** a *Ready* profile or Default: opens it, or brings it to the
-  front if it's already running. Several profiles can run at once.
-- **⋯ menu**: Create desktop shortcut, Rename, Reset to *Not signed in
-  yet*, Remove. Remove asks a second time before deleting the profile's
-  folders; keeping them is the default. A profile can't be removed while
-  it's running.
+- **Add profile**: give it a name, e.g. "Personal", then choose **Open
+  Claude**. A new Claude window opens next to the one you have; nothing is
+  closed.
+- **Sign in with "Continue with email"**, not "Continue with Google".
+  Google sign-in comes back through a `claude://` link that Windows always
+  hands to your Default Claude, so it would sign in there instead. Email
+  sign-in also works for accounts created with Google.
+- **Launch**: opens the profile, or brings it to the front if it's already
+  running. Several profiles can run at once.
+- **⋯ menu**: Create desktop shortcut, Rename, Remove. Remove asks a
+  second time before deleting the profile's folders; keeping them is the
+  default. A profile can't be removed while it's running.
 - **Desktop shortcut** `Claude - <name>` opens that profile in one click,
   without showing the launcher. It runs
   `claude-multi-account-launcher.exe --launch <slug>`
@@ -83,7 +79,7 @@ Smart App Control settings**. If it's **On** or **Evaluation**, set it to
 
 | What | Where |
 |---|---|
-| Profile list | `%APPDATA%\claude-multi-account-launcher\profiles.json` (names, slugs, status; no secrets) |
+| Profile list | `%APPDATA%\claude-multi-account-launcher\profiles.json` (names and slugs; no secrets) |
 | Shortcut icon | `%APPDATA%\claude-multi-account-launcher\claude.ico`, copied once from Claude |
 | Profile's Claude Desktop data | `%APPDATA%\Claude-<slug>` |
 | Profile's Claude Code config | `%USERPROFILE%\.claude-<slug>` (set as `CLAUDE_CONFIG_DIR`) |

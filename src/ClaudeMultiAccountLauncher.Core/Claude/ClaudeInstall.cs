@@ -15,7 +15,7 @@ public enum InstallKind
 /// <param name="LaunchPath">What to start. For MSIX this is the execution alias, which keeps
 /// package identity and passes both arguments and environment through (Phase 1 spike).</param>
 /// <param name="InstallFolder">Folder that holds the Desktop executable. Used to tell Claude
-/// Desktop processes apart from the Claude Code CLI, which is also claude.exe (FR-4, FR-7).</param>
+/// Desktop processes apart from the Claude Code CLI, which is also claude.exe (FR-7).</param>
 public sealed record ClaudeInstall(InstallKind Kind, string LaunchPath, string InstallFolder)
 {
     /// <summary>

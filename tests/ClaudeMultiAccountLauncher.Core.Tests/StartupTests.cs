@@ -69,27 +69,15 @@ public sealed class StartupTests : IDisposable
     }
 
     [Fact]
-    public void Ready_profile_launches_directly()
+    public void Profile_launches_directly()
     {
-        var ready = new Profile("Personal", "personal", ProfileStatus.Ready, DateTimeOffset.UnixEpoch);
-        _store.Save([ready]);
+        var personal = new Profile("Personal", "personal", DateTimeOffset.UnixEpoch);
+        _store.Save([personal]);
 
         var outcome = NewQuickLauncher().Run("personal");
 
         Assert.IsType<QuickLaunchOutcome.Launched>(outcome);
-        Assert.Equal(ready, Assert.Single(_started).Profile);
-    }
-
-    [Fact]
-    public void Not_signed_in_profile_needs_the_sign_in_flow_and_starts_nothing()
-    {
-        var fresh = new Profile("Personal", "personal", ProfileStatus.NotSignedIn, DateTimeOffset.UnixEpoch);
-        _store.Save([fresh]);
-
-        var outcome = NewQuickLauncher().Run("personal");
-
-        Assert.Equal(fresh, Assert.IsType<QuickLaunchOutcome.NeedsSignIn>(outcome).Profile);
-        Assert.Empty(_started);
+        Assert.Equal(personal, Assert.Single(_started).Profile);
     }
 
     [Fact]

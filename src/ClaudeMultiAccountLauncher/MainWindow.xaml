@@ -61,18 +61,6 @@
                 IsOpen="False"
                 Severity="Success"
                 Visibility="{x:Bind NoticeBar.IsOpen, Mode=OneWay}" />
-
-            <InfoBar
-                x:Name="BusyBar"
-                Margin="0,12,0,0"
-                IsClosable="False"
-                IsOpen="False"
-                Severity="Informational"
-                Visibility="{x:Bind BusyBar.IsOpen, Mode=OneWay}">
-                <InfoBar.Content>
-                    <ProgressBar Margin="0,0,0,12" IsIndeterminate="True" />
-                </InfoBar.Content>
-            </InfoBar>
         </StackPanel>
 
         <ScrollViewer Grid.Row="2">
@@ -103,8 +91,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <Grid Width="8" Height="8" VerticalAlignment="Center">
                                         <Ellipse Fill="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind IsRunning, Mode=OneWay}" />
-                                        <Ellipse Fill="{ThemeResource SystemFillColorCautionBrush}" Visibility="{x:Bind IsNotSignedIn, Mode=OneWay}" />
-                                        <Ellipse Fill="{ThemeResource ControlStrongFillColorDefaultBrush}" Visibility="{x:Bind IsReady, Mode=OneWay}" />
+                                        <Ellipse Fill="{ThemeResource ControlStrongFillColorDefaultBrush}" Visibility="{x:Bind IsNotRunning, Mode=OneWay}" />
                                     </Grid>
                                     <TextBlock
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -154,16 +141,6 @@
                                             Visibility="{x:Bind IsCustom}">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon Glyph="&#xE8AC;" />
-                                            </MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem
-                                            Click="ResetSignInMenu_Click"
-                                            IsEnabled="{x:Bind CanResetSignIn, Mode=OneWay}"
-                                            Tag="{x:Bind}"
-                                            Text="Reset to Not signed in yet"
-                                            Visibility="{x:Bind IsCustom}">
-                                            <MenuFlyoutItem.Icon>
-                                                <FontIcon Glyph="&#xE72C;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                         <MenuFlyoutSeparator Visibility="{x:Bind IsCustom}" />

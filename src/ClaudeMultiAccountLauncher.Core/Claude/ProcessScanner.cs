@@ -39,7 +39,7 @@ public sealed class WmiProcessSource : IProcessSource
     }
 }
 
-/// <summary>Finds running Claude Desktop instances (FR-7) and all Desktop processes (FR-4).</summary>
+/// <summary>Finds running Claude Desktop instances (FR-7).</summary>
 public sealed class ProcessScanner(IProcessSource source)
 {
     private const string UserDataDirSwitch = "--user-data-dir=";

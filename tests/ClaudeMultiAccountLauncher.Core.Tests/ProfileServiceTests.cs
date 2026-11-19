@@ -31,13 +31,12 @@ public sealed class ProfileServiceTests : IDisposable
     }
 
     [Fact]
-    public void Add_creates_both_folders_and_a_not_signed_in_profile()
+    public void Add_creates_both_folders_and_saves_the_profile()
     {
         var profile = NewService().Add("  Personal ");
 
         Assert.Equal("Personal", profile.Name);
         Assert.Equal("personal", profile.Slug);
-        Assert.Equal(ProfileStatus.NotSignedIn, profile.Status);
         Assert.True(Directory.Exists(_paths.DataFolder("personal")));
         Assert.True(Directory.Exists(_paths.ConfigFolder("personal")));
         Assert.Equal([profile], _store.Load());
@@ -151,21 +150,10 @@ public sealed class ProfileServiceTests : IDisposable
     }
 
     [Fact]
-    public void SetStatus_persists()
-    {
-        var service = NewService();
-        service.Add("Personal");
-
-        service.SetStatus("personal", ProfileStatus.Ready);
-
-        Assert.Equal(ProfileStatus.Ready, Assert.Single(_store.Load()).Status);
-    }
-
-    [Fact]
     public void Running_maps_instances_to_default_and_profiles()
     {
-        var personal = new Profile("Personal", "personal", ProfileStatus.Ready, DateTimeOffset.UnixEpoch);
-        var work = new Profile("Work", "work", ProfileStatus.Ready, DateTimeOffset.UnixEpoch);
+        var personal = new Profile("Personal", "personal", DateTimeOffset.UnixEpoch);
+        var work = new Profile("Work", "work", DateTimeOffset.UnixEpoch);
         RunningInstance[] running = [new(1, null), new(2, _paths.DataFolder("personal").ToUpperInvariant() + "\\")];
 
         Assert.True(RunningProfiles.IsRunning(null, running, _paths));

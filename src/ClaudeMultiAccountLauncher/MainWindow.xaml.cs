@@ -77,14 +77,9 @@ public sealed partial class MainWindow : Window
         }
 
         _pendingStartup = null;
-        switch (startup)
+        if (startup is StartupAction.ShowError error)
         {
-            case StartupAction.ShowError error:
-                ShowErrors(error.Message);
-                break;
-            case StartupAction.SignIn signIn when _profiles.Find(signIn.Slug) is { } profile && _install is not null:
-                await FirstSignInAsync(_install, profile);
-                break;
+            ShowErrors(error.Message);
         }
     }
 
@@ -204,11 +199,8 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        if (row.Profile is { Status: ProfileStatus.NotSignedIn } profile)
-        {
-            await FirstSignInAsync(_install, profile);
-        }
-        else if (StartClaude(_install, row.Profile))
+        // Opens next to any Claude already running; if this one is running, Claude brings it to the front.
+        if (StartClaude(_install, row.Profile))
         {
             await RefreshSoonAsync();
         }
@@ -238,106 +230,36 @@ public sealed partial class MainWindow : Window
     // ---------- First sign-in (FR-4) ----------
 
     /// <summary>
-    /// Sign-in returns through a claude:// link that Windows hands to whichever Claude is already
-    /// running, so every other Claude Desktop must be closed before the new profile starts.
+    /// Right after adding a profile: offer to open it, with the one thing that matters.
+    /// Google sign-in returns through a claude:// link, which Windows always hands to the
+    /// Default Claude (verified 2026-11-19), so the profile must sign in with email instead.
+    /// Nothing is closed.
     /// </summary>
-    private async Task FirstSignInAsync(ClaudeInstall install, Profile profile)
+    private async Task OfferFirstSignInAsync(Profile profile)
     {
-        var closer = new ClaudeCloser(_scanner, new Win32ProcessTerminator());
-
-        // 1. Anything running? Ask before closing it.
-        var running = await Task.Run(() => closer.DesktopProcesses(install));
-        if (running.Count > 0)
-        {
-            var confirm = await NewDialog(
-                "Close Claude to sign in?",
-                $"To sign in to \"{profile.Name}\", every Claude Desktop window has to close first. "
-                + "Otherwise the sign-in link opens in the Claude that's already running."
-                + Environment.NewLine + Environment.NewLine
-                + "Anything unsent in open Claude windows will be lost, and Claude Code sessions inside Claude Desktop will stop. "
-                + "Claude Code in a terminal keeps running.",
-                primary: "Close Claude and continue",
-                close: "Cancel").ShowAsync();
-            if (confirm != ContentDialogResult.Primary)
-            {
-                return;
-            }
-
-            // 2. End all Claude Desktop processes (by exe path, never the CLI) and wait until gone.
-            SetBusy(true, "Closing Claude…");
-            bool closed;
-            try
-            {
-                closed = await Task.Run(() => closer.CloseAllAsync(install));
-            }
-            finally
-            {
-                SetBusy(false);
-            }
-
-            if (!closed)
-            {
-                ShowErrors("Couldn't close every Claude window. Quit Claude from its tray icon, then try again.");
-                await RefreshAsync();
-                return;
-            }
-        }
-
-        // 3. Launch the new profile only.
-        if (!StartClaude(install, profile))
+        if (_install is null)
         {
             return;
         }
 
-        // 4. Ask whether sign-in worked.
-        var signedIn = await NewDialog(
-            "Signed in successfully?",
-            $"Sign in to the account for \"{profile.Name}\" in the Claude window that just opened, then come back here.",
-            primary: "Yes",
-            close: "Not yet").ShowAsync();
-
-        // 5. Yes marks it Ready; Not yet keeps it as is, so the next Launch runs this flow again.
-        if (signedIn == ContentDialogResult.Primary)
+        var text = new TextBlock { TextWrapping = TextWrapping.Wrap };
+        text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = "Claude opens in a new window next to the one you have now. Nothing gets closed." });
+        text.Inlines.Add(new Microsoft.UI.Xaml.Documents.LineBreak());
+        text.Inlines.Add(new Microsoft.UI.Xaml.Documents.LineBreak());
+        text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = "Sign in there with " });
+        var bold = new Microsoft.UI.Xaml.Documents.Bold();
+        bold.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = "Continue with email" });
+        text.Inlines.Add(bold);
+        text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run
         {
-            TryChange(() => _profiles.SetStatus(profile.Slug, ProfileStatus.Ready), "update the profile");
-        }
+            Text = ". Don't use Continue with Google: Google sign-in always ends up in your Default Claude window, not in this profile.",
+        });
 
-        await RefreshAsync();
-    }
-
-    private void SetBusy(bool busy, string? message = null)
-    {
-        BusyBar.IsOpen = busy;
-        BusyBar.Message = message ?? string.Empty;
-        AddButton.IsEnabled = !busy && _storeError is null;
-        ProfileList.IsHitTestVisible = !busy;
-    }
-
-    private bool TryChange(Action change, string what)
-    {
-        try
+        var open = await NewDialog($"Sign in to \"{profile.Name}\"", text, primary: "Open Claude", close: "Later").ShowAsync();
+        if (open == ContentDialogResult.Primary && StartClaude(_install, profile))
         {
-            change();
-            return true;
+            await RefreshSoonAsync();
         }
-        catch (Exception ex) when (ex is ProfileValidationException or IOException or UnauthorizedAccessException)
-        {
-            ShowErrors($"Couldn't {what}: {ex.Message}");
-            return false;
-        }
-    }
-
-    // ---------- Reset sign-in (FR-4) ----------
-
-    private async void ResetSignInMenu_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is not ProfileRow { Profile: { } profile })
-        {
-            return;
-        }
-
-        TryChange(() => _profiles.SetStatus(profile.Slug, ProfileStatus.NotSignedIn), "reset the profile");
-        await RefreshAsync();
     }
 
     // ---------- Add (FR-2) ----------
@@ -350,9 +272,10 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        Profile added;
         try
         {
-            _profiles.Add(name);
+            added = _profiles.Add(name);
         }
         catch (Exception ex) when (ex is ProfileValidationException or IOException or UnauthorizedAccessException)
         {
@@ -361,6 +284,7 @@ public sealed partial class MainWindow : Window
         }
 
         await RefreshAsync();
+        await OfferFirstSignInAsync(added);
     }
 
     // ---------- Rename and remove (FR-5) ----------

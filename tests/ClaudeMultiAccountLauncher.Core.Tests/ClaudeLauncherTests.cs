@@ -6,7 +6,7 @@ namespace ClaudeMultiAccountLauncher.Core.Tests;
 public sealed class ClaudeLauncherTests : IDisposable
 {
     private static readonly ClaudeInstall Install = new(InstallKind.Msix, @"C:\WA\claude-desktop.exe", @"C:\P\Claude_1_x64__pzs8sxrjxfjjc");
-    private static readonly Profile Personal = new("Personal", "personal", ProfileStatus.NotSignedIn, DateTimeOffset.UnixEpoch);
+    private static readonly Profile Personal = new("Personal", "personal", DateTimeOffset.UnixEpoch);
 
     private readonly string _root = Path.Combine(Path.GetTempPath(), "cmal-tests-" + Guid.NewGuid().ToString("N"));
     private readonly LauncherPaths _paths;
