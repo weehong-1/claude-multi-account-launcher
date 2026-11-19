@@ -27,8 +27,23 @@ with one click, instead of running commands or batch files by hand.
   Windows hands it to whichever Claude is already running. A new profile
   must be signed in while no other Claude process is running.
 - Exe location:
-  - MSIX install (current): `%LOCALAPPDATA%\Microsoft\WindowsApps\Claude.exe`
+  - MSIX install (current): package family `Claude_pzs8sxrjxfjjc`.
+    - Execution alias: `%LOCALAPPDATA%\Microsoft\WindowsApps\claude-desktop.exe`
+      (declared in Claude's AppxManifest; there is no `Claude.exe` alias)
+    - Real exe: `C:\Program Files\WindowsApps\Claude_<version>_<arch>__pzs8sxrjxfjjc\app\Claude.exe`.
+      The versioned folder changes on every update
+    - Launch through the alias. It keeps package identity and passes both
+      command-line arguments and environment variables through to Claude
+      (verified 2026-11-19). The started process is Claude's main process
+      itself, with no stub in between
   - Older standalone install: `%LOCALAPPDATA%\AnthropicClaude\claude.exe`
+- MSIX file system virtualization (verified 2026-11-19): when MSIX Claude
+  writes to a folder under `%APPDATA%` that does not exist yet, Windows
+  redirects it to
+  `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\<folder>`.
+  If the folder already exists in the real `%APPDATA%`, Claude writes there
+  directly. The Default profile's data lives in that LocalCache for this
+  reason
 - This is an unofficial technique. A Claude Desktop update can break it.
 
 ## 3. Scope
@@ -67,11 +82,18 @@ with one click, instead of running commands or batch files by hand.
 - Paths per profile:
   - Data: `%APPDATA%\Claude-<slug>` (directly under `%APPDATA%`, see section 8)
   - Claude Code config: `%USERPROFILE%\.claude-<slug>`
-- Create folders if missing. New profile status: `Not signed in yet`
+- Create folders if missing, in the real `%APPDATA%` and `%USERPROFILE%`
+  (the launcher is unpackaged, so it is not redirected). New profile
+  status: `Not signed in yet`
+- Slug `default` is reserved for the built-in Default profile
 
 ### FR-3 Launch (one click)
 
 - Resolve exe per FR-6
+- Before every launch, make sure the profile's data and config folders
+  exist (FR-2). If the data folder is missing when MSIX Claude starts,
+  its data silently lands in the package LocalCache (section 2) and
+  FR-5 deletion would miss it
 - Start Claude with `--user-data-dir="<data folder>"` and env var
   `CLAUDE_CONFIG_DIR=<config folder>` (Default profile: neither)
 - Launching a profile that is already running only brings Claude to
@@ -87,7 +109,12 @@ with one click, instead of running commands or batch files by hand.
      gone
      - Identify them by executable path (the resolved Claude Desktop
        install folder from FR-6), never by process name alone: the
-       Claude Code CLI is also `claude.exe` and must not be killed
+       Claude Code CLI is also `claude.exe` and must not be killed.
+       The CLI that Desktop bundles runs from
+       `%LOCALAPPDATA%\Claude-Data\claude_pzs8sxrjxfjjc\claude-code\...\claude.exe`
+     - For MSIX, match any `Claude_*__pzs8sxrjxfjjc` package folder, so a
+       process still running from the previous version after an update
+       is included
   3. Launch the new profile only
   4. Show a dialog: "Signed in successfully?" `Yes` / `Not yet`
   5. `Yes` sets status to `Ready`
@@ -101,9 +128,15 @@ with one click, instead of running commands or batch files by hand.
 
 ### FR-6 Exe resolution
 
-- Try in order: MSIX alias path, then standalone path (section 2)
-- If neither exists, try the installed package location
-  (`Get-AppxPackage *Claude*` equivalent)
+- Result has two parts: the launch path, and the install folder used to
+  recognise Claude Desktop processes (FR-4, FR-7)
+- Try in order:
+  1. MSIX alias `claude-desktop.exe` (section 2). Its install folder is
+     the package location from the package manager (family
+     `Claude_pzs8sxrjxfjjc`, `Get-AppxPackage` equivalent)
+  2. Standalone path (section 2); install folder `%LOCALAPPDATA%\AnthropicClaude`
+  3. MSIX package location without the alias: launch `app\Claude.exe`
+     inside it
 - If still not found, show an error naming the paths tried
 
 ### FR-7 Running indicator
@@ -111,6 +144,8 @@ with one click, instead of running commands or batch files by hand.
 - Detect running profiles by reading Claude Desktop process command
   lines (same executable-path filter as FR-4) for
   `--user-data-dir=<data folder>`; no flag means Default
+- Only main processes count. Electron child processes carry `--type=`
+  and are skipped
 - Refresh when the window gets focus
 
 ### FR-8 Desktop shortcut (per profile, user chooses)
@@ -165,6 +200,10 @@ with one click, instead of running commands or batch files by hand.
   `%APPDATA%\<data folder name>\vm_bundles`, ignoring
   `--user-data-dir`. So each data folder must sit directly under
   `%APPDATA%` (not in a subfolder), else "VHDX file not found"
+- MSIX file system virtualization (section 2): a profile data folder
+  deleted by hand while the profile still exists will be recreated by
+  the launcher on next launch; if Claude were started some other way
+  first, its data would land in the package LocalCache instead
 - Only one profile can run the Cowork VM at a time (second one may
   fail with `HYPERVISOR_SERVICE_ERROR`)
 - The `Claude-` prefix on data folders avoids clashing with other
