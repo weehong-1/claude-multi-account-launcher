@@ -22,6 +22,12 @@ dotnet build
 dotnet run --project src/ClaudeMultiAccountLauncher
 ```
 
+## Test
+
+```powershell
+dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests
+```
+
 ## Publish a single self-contained exe
 
 ```powershell

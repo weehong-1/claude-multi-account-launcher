@@ -10,6 +10,17 @@
     </Window.SystemBackdrop>
 
     <Grid>
+        <Grid.Resources>
+            <FontFamily x:Key="MonoFont">JetBrains Mono</FontFamily>
+            <Style x:Key="LabelStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}" />
+            <Style x:Key="PathStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="IsTextSelectionEnabled" Value="True" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+        </Grid.Resources>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="*" />
@@ -23,15 +34,63 @@
                 Text="Claude Multi-Account Launcher" />
         </Grid>
 
-        <StackPanel
-            Grid.Row="1"
-            Padding="24"
-            Spacing="8">
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Profiles" />
-            <TextBlock
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="No profiles yet. The profile list arrives in Phase 2."
-                TextWrapping="Wrap" />
-        </StackPanel>
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Padding="24,8,24,24" Spacing="16">
+                <Grid>
+                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Diagnostics" />
+                    <Button
+                        x:Name="RefreshButton"
+                        HorizontalAlignment="Right"
+                        Click="RefreshButton_Click"
+                        Content="Refresh" />
+                </Grid>
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Phase 1 check of what the launcher sees. The profile list replaces this in Phase 2. Refreshes when the window gets focus."
+                    TextWrapping="Wrap" />
+
+                <InfoBar
+                    x:Name="ErrorBar"
+                    IsClosable="False"
+                    IsOpen="False"
+                    Severity="Error" />
+
+                <StackPanel Spacing="4">
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Claude Desktop" />
+                    <TextBlock Style="{StaticResource LabelStyle}" Text="Install type" />
+                    <TextBlock x:Name="InstallKindText" Text="…" />
+                    <TextBlock Style="{StaticResource LabelStyle}" Text="Launch path" />
+                    <TextBlock x:Name="LaunchPathText" Style="{StaticResource PathStyle}" Text="…" />
+                    <TextBlock Style="{StaticResource LabelStyle}" Text="Install folder (process filter)" />
+                    <TextBlock x:Name="InstallFolderText" Style="{StaticResource PathStyle}" Text="…" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Profiles file" />
+                    <TextBlock x:Name="ProfilesFileText" Style="{StaticResource PathStyle}" Text="…" />
+                    <TextBlock x:Name="ProfilesCountText" Text="…" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Running Claude Desktop instances" />
+                    <TextBlock x:Name="RunningSummaryText" Text="…" />
+                    <ItemsControl x:Name="RunningList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock
+                                    Margin="0,2"
+                                    Style="{StaticResource PathStyle}"
+                                    Text="{x:Bind}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock
+                        x:Name="IgnoredText"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="…"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Window>
