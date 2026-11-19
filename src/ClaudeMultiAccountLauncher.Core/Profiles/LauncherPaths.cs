@@ -32,6 +32,9 @@ public sealed class LauncherPaths
 
     public string ProfilesFile => Path.Combine(AppFolder, "profiles.json");
 
+    /// <summary>Stable copy of Claude's icon for shortcuts, next to profiles.json (FR-8).</summary>
+    public string ClaudeIconFile => Path.Combine(AppFolder, "claude.ico");
+
     /// <summary>
     /// <c>%APPDATA%\Claude-&lt;slug&gt;</c>. Must sit directly under %APPDATA% (spec section 8, Cowork).
     /// The launcher must create it in the real %APPDATA% before Claude first runs, or MSIX

@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using ClaudeMultiAccountLauncher.Core.Claude;
 using ClaudeMultiAccountLauncher.Core.Profiles;
+using ClaudeMultiAccountLauncher.Core.Shortcuts;
+using ClaudeMultiAccountLauncher.Core.Startup;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Graphics;
@@ -19,17 +21,23 @@ public sealed partial class MainWindow : Window
     private readonly ProcessScanner _scanner = new(new WmiProcessSource());
     private readonly ObservableCollection<ProfileRow> _rows = [];
 
+    private readonly ShortcutService _shortcuts = new(
+        Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+        Environment.ProcessPath ?? string.Empty);
+
     private ClaudeInstall? _install;
     private string? _installError;
     private string? _storeError;
     private bool _refreshing;
+    private StartupAction? _pendingStartup;
 
-    public MainWindow()
+    public MainWindow(StartupAction? startup = null)
     {
         InitializeComponent();
 
         _profiles = new ProfileService(new ProfileStore(_paths.ProfilesFile), _paths);
         _launcher = new ClaudeLauncher(_paths);
+        _pendingStartup = startup;
         ProfileList.ItemsSource = _rows;
 
         ExtendsContentIntoTitleBar = true;
@@ -46,9 +54,31 @@ public sealed partial class MainWindow : Window
         {
             if (e.WindowActivationState != WindowActivationState.Deactivated)
             {
-                _ = RefreshAsync();
+                _ = OnActivatedAsync();
             }
         };
+    }
+
+    private async Task OnActivatedAsync()
+    {
+        await RefreshAsync();
+
+        // Opened from a shortcut that needs the user (FR-8): run it once, after the first refresh.
+        if (_pendingStartup is not { } startup || !Root.IsLoaded)
+        {
+            return;
+        }
+
+        _pendingStartup = null;
+        switch (startup)
+        {
+            case StartupAction.ShowError error:
+                ShowErrors(error.Message);
+                break;
+            case StartupAction.SignIn signIn when _profiles.Find(signIn.Slug) is { } profile && _install is not null:
+                await FirstSignInAsync(_install, profile);
+                break;
+        }
     }
 
     // ---------- Loading and refreshing ----------
@@ -341,9 +371,10 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        Profile renamed;
         try
         {
-            _profiles.Rename(profile.Slug, name);
+            renamed = _profiles.Rename(profile.Slug, name);
         }
         catch (Exception ex) when (ex is ProfileValidationException or IOException or UnauthorizedAccessException)
         {
@@ -352,6 +383,13 @@ public sealed partial class MainWindow : Window
         }
 
         await RefreshAsync();
+
+        // Keep the desktop shortcut's name in step with the profile.
+        var shortcutError = TryShortcut(() => _shortcuts.Rename(renamed.Slug, renamed.Name, ClaudeIcon.Ensure(_paths, _install)));
+        if (shortcutError is not null)
+        {
+            ShowErrors($"Renamed the profile, but couldn't update its desktop shortcut: {shortcutError}");
+        }
     }
 
     private async void RemoveMenu_Click(object sender, RoutedEventArgs e)
@@ -361,9 +399,12 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        var hasShortcut = _shortcuts.Find(profile.Slug) is not null;
         var confirm = await NewDialog(
             $"Remove \"{profile.Name}\"?",
-            "It will no longer appear in the launcher.",
+            hasShortcut
+                ? "It will no longer appear in the launcher, and its desktop shortcut will be deleted."
+                : "It will no longer appear in the launcher.",
             primary: "Remove",
             close: "Cancel").ShowAsync();
         if (confirm != ContentDialogResult.Primary)
@@ -397,11 +438,73 @@ public sealed partial class MainWindow : Window
         }
 
         await RefreshAsync();
+
+        var problems = new List<string>();
         if (result.FailedFolders.Count > 0)
         {
-            ShowErrors("Removed the profile, but couldn't delete these folders (maybe in use). Delete them by hand:"
+            problems.Add("Removed the profile, but couldn't delete these folders (maybe in use). Delete them by hand:"
                 + Environment.NewLine + string.Join(Environment.NewLine, result.FailedFolders));
         }
+
+        // A shortcut to a removed profile would only show an error, so it goes too.
+        if (TryShortcut(() => _shortcuts.Delete(profile.Slug)) is { } shortcutError)
+        {
+            problems.Add($"Couldn't delete the profile's desktop shortcut: {shortcutError}");
+        }
+
+        if (problems.Count > 0)
+        {
+            ShowErrors(string.Join(Environment.NewLine + Environment.NewLine, problems));
+        }
+    }
+
+    // ---------- Desktop shortcut (FR-8) ----------
+
+    private void ShortcutMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is not ProfileRow row)
+        {
+            return;
+        }
+
+        var slug = row.Profile?.Slug ?? StartupCommand.DefaultSlug;
+        var icon = ClaudeIcon.Ensure(_paths, _install);
+        string? path = null;
+        var error = TryShortcut(() => path = _shortcuts.Create(row.Name, slug, icon));
+
+        if (error is not null)
+        {
+            ShowErrors($"Couldn't create the desktop shortcut: {error}");
+            return;
+        }
+
+        ShowNotice(icon is null
+            ? $"Created \"{Path.GetFileName(path)}\" on your desktop. Claude's icon couldn't be copied, so it uses the launcher's icon."
+            : $"Created \"{Path.GetFileName(path)}\" on your desktop.");
+    }
+
+    /// <summary>Runs a shortcut operation; returns an error message or null.</summary>
+    private static string? TryShortcut(Action action)
+    {
+        try
+        {
+            action();
+            return null;
+        }
+        catch (ShortcutConflictException ex)
+        {
+            return ex.Message;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+        {
+            return ex.Message;
+        }
+    }
+
+    private void ShowNotice(string message)
+    {
+        NoticeBar.Message = message;
+        NoticeBar.IsOpen = true;
     }
 
     // ---------- Dialog helpers ----------
