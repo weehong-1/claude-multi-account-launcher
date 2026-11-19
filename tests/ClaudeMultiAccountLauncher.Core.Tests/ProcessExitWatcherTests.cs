@@ -19,7 +19,7 @@ public class ProcessExitWatcherTests
                 return true;
             }
 
-            await Task.Delay(20);
+            await Task.Delay(20, TestContext.Current.CancellationToken);
         }
 
         return condition();
@@ -59,7 +59,7 @@ public class ProcessExitWatcherTests
 
         dummy.Kill();
         Assert.True(await WaitFor(() => exited.Contains(dummy.Id)));
-        await Task.Delay(300);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         Assert.Single(exited);
     }
