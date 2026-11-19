@@ -155,15 +155,6 @@
                                         </MenuFlyoutItem>
                                         <MenuFlyoutSeparator Visibility="{x:Bind IsCustom}" />
                                         <MenuFlyoutItem
-                                            Click="FinishGoogleSignInMenu_Click"
-                                            Tag="{x:Bind}"
-                                            Text="Finish Google sign-in…"
-                                            Visibility="{x:Bind IsCustom}">
-                                            <MenuFlyoutItem.Icon>
-                                                <FontIcon Glyph="&#xE77B;" />
-                                            </MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem
                                             Click="RenameMenu_Click"
                                             Tag="{x:Bind}"
                                             Text="Rename"
