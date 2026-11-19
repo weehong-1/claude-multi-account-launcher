@@ -146,7 +146,15 @@ because Google sign-in always returns to Default (section 2).
   process from the previous version after an update still counts
 - Only main processes count. Electron child processes carry `--type=`
   and are skipped
-- Refresh when the window gets focus
+- Updates live (revised 2026-11-19; focus-only refresh left the status
+  stale while the window stayed open):
+  - At once when a running Claude exits (the launcher waits on each
+    running main process)
+  - Within about 3 seconds when Claude is started elsewhere, while the
+    window is on screen (no polling while minimized)
+  - Also on window focus and shortly after Launch
+- A Claude that keeps running in the background after its window is
+  closed still counts as running
 
 ### FR-8 Desktop shortcut (per profile, user chooses)
 
@@ -191,8 +199,8 @@ because Google sign-in always returns to Default (section 2).
 - [ ] Claude Code sessions in "Personal" write to `.claude-personal`
 - [ ] Desktop shortcut for "Personal" opens that profile in one click
 - [ ] Shortcut icon still shows after a Claude Desktop update
-- [ ] Running profiles show `Running`; closing Claude clears it on
-      next window focus
+- [ ] Running profiles show `Running`; when Claude exits it clears
+      without refocusing the launcher
 - [ ] Removing a profile keeps its folders unless deletion is confirmed
 - [ ] Works on both MSIX and standalone installs
 - [ ] The Claude Code CLI is never counted as a running profile (FR-7)

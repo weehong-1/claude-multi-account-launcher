@@ -73,7 +73,10 @@ Smart App Control settings**. If it's **On** or **Evaluation**, set it to
   without showing the launcher. It runs
   `claude-multi-account-launcher.exe --launch <slug>`
   (`--launch default` for Default).
-- *Running* refreshes when the launcher window gets focus.
+- *Running* updates by itself: it clears as soon as a Claude exits, and
+  picks up a Claude started elsewhere within a few seconds while the
+  launcher is on screen. If Claude stays in the background after you
+  close its window, it still counts as running.
 
 ## Where things live
 
