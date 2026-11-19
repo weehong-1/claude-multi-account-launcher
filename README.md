@@ -36,8 +36,23 @@ Download from [Releases](https://github.com/weehong-1/claude-multi-account-launc
 folder it will stay in. Desktop shortcuts point at the exe's location, so
 if you move it, create the shortcuts again.
 
-The files aren't code-signed. The first time, Windows SmartScreen may say
-"Windows protected your PC": choose **More info → Run anyway**.
+### Unsigned: turn off Smart App Control first
+
+The files aren't code-signed. On a PC with **Smart App Control** on (common
+on fresh Windows 11 installs), Windows blocks the launcher outright with
+"An Application Control policy has blocked this file", and there is no
+"Run anyway". The installer itself still installs, but the app won't start.
+
+Check before installing: **Windows Security → App & browser control →
+Smart App Control settings**. If it's **On** or **Evaluation**, set it to
+**Off**, then install.
+
+- Since the April 2026 Windows update (builds 26100.8116 / 26200.8116 and
+  later) it can be turned back on from the same page. On older builds,
+  turning it off is one-way until Windows is reset.
+- If Smart App Control is off, SmartScreen may still say "Windows
+  protected your PC" for a downloaded file: choose **More info → Run
+  anyway**.
 
 ## Use
 

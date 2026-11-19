@@ -27,6 +27,28 @@ How each item was checked:
 | 9 | Works on both MSIX and standalone installs | **Partly** | MSIX: everything above. Standalone: lookup order and process matching covered by tests only; no standalone install was available |
 | 10 | FR-4 leaves a running Claude Code CLI session untouched | Pass | Read-only run against all real `claude.exe` processes: 15 Desktop processes picked, 3 CLI processes kept, path re-checked on the handle that would be terminated; tests. Not watched live with a terminal session during a real close |
 
+## Clean-PC test (Windows Sandbox, v0.1.0 release files)
+
+Fresh Windows 11 Enterprise 10.0.26100 with networking off: no .NET, no
+Windows App SDK runtime of ours, no VC++ redistributable, no Claude.
+
+- MSI install: Pass. Exit 0, exe identical to the portable download,
+  Start menu shortcut and Apps entry present
+- Launching the app (installed or portable): **Blocked by Smart App
+  Control**, which is on in the sandbox. CodeIntegrity event 3118 "Smart
+  App Control Block" / 3077 for `claude-multi-account-launcher.exe`,
+  because the exe is unsigned
+- Decision (Vernon, 2026-11-19): no code signing for now. New PCs turn
+  Smart App Control off before installing; documented in the README.
+  If signing becomes necessary, use SignPath Foundation (free for open
+  source). Before applying, the repo needs an OSI-approved license (there
+  is no LICENSE file yet) and release builds on GitHub Actions, since
+  SignPath checks the binaries are built from the public source. The
+  publisher shown will be "SignPath Foundation"
+
+Not yet shown on a clean PC: that the app starts and runs with nothing
+else installed. That needs a clean PC with Smart App Control off.
+
 ## Open items
 
 1. **#6**: after the next Claude Desktop update, check that `Claude - *`
