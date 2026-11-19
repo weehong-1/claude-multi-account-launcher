@@ -114,16 +114,6 @@ because Google sign-in always returns to Default (section 2).
 - `Open Claude` launches the profile per FR-3. The user signs in there
 - Nothing is ever closed, and there is no "signed in?" question. Launch
   works the same for every profile, first time or not
-- Google sign-in (added 2026-11-19): the browser's sign-in page shows an
-  `Open Claude` button whose link is the `claude://login/...` callback.
-  The user cancels the browser's "Open Claude?" prompt, copies that link,
-  and picks the profile's `Finish Google sign-in…`. The launcher reads
-  the clipboard, accepts only a `claude://login/` link, and starts
-  `claude-desktop.exe --user-data-dir=<profile> -- "<link>"`, the same
-  shape the MSIX protocol handler uses for Default. Claude's own
-  single-instance hand-off delivers it to the profile's running window.
-  The clipboard is then cleared; the link (a one-time code) is never
-  shown, logged or stored
 
 ### FR-5 Rename and remove
 
@@ -251,8 +241,7 @@ Software installed on someone's PC must also be removable from it.
   Connectors that finish their sign-in through a `claude://` link will
   hit the same problem as Google sign-in and land in Default (not yet
   tested)
-- Google sign-in needs the extra copy-the-link step (FR-4); email
-  sign-in doesn't
+- Google sign-in can't be used in a profile (section 2); email only
 - Cowork's VM service looks for its image at
   `%APPDATA%\<data folder name>\vm_bundles`, ignoring
   `--user-data-dir`. So each data folder must sit directly under

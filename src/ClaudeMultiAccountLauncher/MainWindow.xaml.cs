@@ -292,10 +292,7 @@ public sealed partial class MainWindow : Window
         text.Inlines.Add(bold);
         text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run
         {
-            Text = ". Google sign-in on its own ends up in your Default Claude window. "
-                + "To use Google anyway: when the browser asks \"Open Claude?\", choose Cancel, "
-                + "right-click the page's Open Claude button, Copy link address, "
-                + "then use ⋯ → Finish Google sign-in on this profile.",
+            Text = ". Don't use Continue with Google: Google sign-in always ends up in your Default Claude window, not in this profile.",
         });
 
         var open = await NewDialog($"Sign in to \"{profile.Name}\"", text, primary: "Open Claude", close: "Later").ShowAsync();
@@ -303,86 +300,6 @@ public sealed partial class MainWindow : Window
         {
             await RefreshSoonAsync();
         }
-    }
-
-    /// <summary>
-    /// Google sign-in returns a claude:// link that Windows always opens in Default. The user
-    /// cancels that, copies the link from the browser page, and this hands it to the profile's
-    /// own Claude instead. The link holds a one-time code: never shown, logged or kept.
-    /// </summary>
-    private async void FinishGoogleSignInMenu_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is not ProfileRow { Profile: { } profile } || _install is null)
-        {
-            return;
-        }
-
-        string? text = null;
-        try
-        {
-            var content = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
-            if (content.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text))
-            {
-                text = await content.GetTextAsync();
-            }
-        }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
-        {
-            // Clipboard busy or unreadable: treated as "no link copied".
-        }
-
-        if (!SignInLink.TryParse(text, out var link))
-        {
-            await NewDialog(
-                "Copy the sign-in link first",
-                Steps(
-                    $"In the Claude window of \"{profile.Name}\", choose Continue with Google and sign in in the browser.",
-                    "When the browser asks \"Open Claude?\", choose Cancel. (Open Claude would sign in your Default window instead.)",
-                    "On the page, right-click the Open Claude button and choose Copy link address.",
-                    "Come back here and choose Finish Google sign-in again."),
-                primary: "OK",
-                close: null).ShowAsync();
-            return;
-        }
-
-        try
-        {
-            using var _ = _launcher.Launch(_install, profile, link);
-        }
-        catch (Exception ex) when (ex is Win32Exception or IOException or UnauthorizedAccessException)
-        {
-            ShowErrors($"Couldn't hand the sign-in link to Claude: {ex.Message}");
-            return;
-        }
-
-        // Don't leave a one-time sign-in code lying on the clipboard.
-        try
-        {
-            Windows.ApplicationModel.DataTransfer.Clipboard.Clear();
-        }
-        catch (System.Runtime.InteropServices.COMException)
-        {
-        }
-
-        ShowNotice($"Sent the sign-in link to \"{profile.Name}\". Check its Claude window; it should now be signed in.");
-        await RefreshSoonAsync();
-    }
-
-    private static TextBlock Steps(params string[] steps)
-    {
-        var text = new TextBlock { TextWrapping = TextWrapping.Wrap };
-        for (var i = 0; i < steps.Length; i++)
-        {
-            if (i > 0)
-            {
-                text.Inlines.Add(new Microsoft.UI.Xaml.Documents.LineBreak());
-                text.Inlines.Add(new Microsoft.UI.Xaml.Documents.LineBreak());
-            }
-
-            text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = $"{i + 1}. {steps[i]}" });
-        }
-
-        return text;
     }
 
     // ---------- Add (FR-2) ----------
