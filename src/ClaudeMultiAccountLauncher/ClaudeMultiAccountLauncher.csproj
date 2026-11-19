@@ -8,7 +8,14 @@
     <RootNamespace>ClaudeMultiAccountLauncher</RootNamespace>
     <AssemblyName>claude-multi-account-launcher</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <Nullable>enable</Nullable>
+
+    <!-- Shown in Explorer file properties and Task Manager -->
+    <Product>Claude Multi-Account Launcher</Product>
+    <AssemblyTitle>Claude Multi-Account Launcher</AssemblyTitle>
+    <Description>Unofficial launcher that runs several Claude Desktop accounts side by side.</Description>
+    <Version>0.1.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
 
     <Platforms>x64</Platforms>
@@ -31,8 +38,19 @@
          .NET 11 calls it legacy (NETSDK1244); nothing we can change until the SDK does. -->
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);NETSDK1244</MSBuildWarningsAsMessages>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>none</DebugType>
+    <!-- Don't copy referenced projects' .pdb next to the exe -->
+    <AllowedReferenceRelatedFileExtensions>none</AllowedReferenceRelatedFileExtensions>
+    <!-- No trimming or AOT: WMI (System.Management) and IShellLink need built-in COM -->
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Window icon, and JetBrains Mono so paths look the same on PCs without it (spec section 6) -->
+    <Content Include="Assets\AppIcon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\Fonts\JetBrainsMono-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\Fonts\JetBrainsMono-OFL.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.7.0" />

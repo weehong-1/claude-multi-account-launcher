@@ -12,7 +12,8 @@
 
     <Grid x:Name="Root">
         <Grid.Resources>
-            <FontFamily x:Key="MonoFont">JetBrains Mono, Cascadia Mono, Consolas</FontFamily>
+            <!-- Bundled copy first, so it works where JetBrains Mono isn't installed -->
+            <FontFamily x:Key="MonoFont">ms-appx:///Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono, Cascadia Mono, Consolas</FontFamily>
         </Grid.Resources>
 
         <Grid.RowDefinitions>
@@ -30,10 +31,8 @@
                 Text="Claude Multi-Account Launcher" />
         </Grid>
 
-        <StackPanel
-            Grid.Row="1"
-            Padding="24,8,24,12"
-            Spacing="12">
+        <!-- A closed InfoBar only hides its content; Visibility follows IsOpen so it takes no space -->
+        <StackPanel Grid.Row="1" Padding="24,8,24,12">
             <Grid>
                 <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Profiles" />
                 <Button
@@ -51,19 +50,25 @@
 
             <InfoBar
                 x:Name="ErrorBar"
+                Margin="0,12,0,0"
                 IsOpen="False"
-                Severity="Error" />
+                Severity="Error"
+                Visibility="{x:Bind ErrorBar.IsOpen, Mode=OneWay}" />
 
             <InfoBar
                 x:Name="NoticeBar"
+                Margin="0,12,0,0"
                 IsOpen="False"
-                Severity="Success" />
+                Severity="Success"
+                Visibility="{x:Bind NoticeBar.IsOpen, Mode=OneWay}" />
 
             <InfoBar
                 x:Name="BusyBar"
+                Margin="0,12,0,0"
                 IsClosable="False"
                 IsOpen="False"
-                Severity="Informational">
+                Severity="Informational"
+                Visibility="{x:Bind BusyBar.IsOpen, Mode=OneWay}">
                 <InfoBar.Content>
                     <ProgressBar Margin="0,0,0,12" IsIndeterminate="True" />
                 </InfoBar.Content>
