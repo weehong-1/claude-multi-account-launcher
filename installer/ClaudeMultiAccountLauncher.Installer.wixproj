@@ -1,0 +1,23 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <!--
+    Per-user MSI around the single-file exe. Build it with tools/build-release.ps1,
+    which publishes the app first. Not part of the .slnx on purpose: a plain
+    `dotnet build` shouldn't need a Release publish.
+    WiX 5 is MS-RL; v6+ moved to the Open Source Maintenance Fee EULA.
+  -->
+  <PropertyGroup>
+    <OutputName>claude-multi-account-launcher-$(Version)-x64</OutputName>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <PublishDir Condition="'$(PublishDir)' == ''">$(MSBuildThisFileDirectory)..\artifacts\publish\</PublishDir>
+    <DefineConstants>Version=$(Version);PublishDir=$(PublishDir);AssetsDir=$(MSBuildThisFileDirectory)..\src\ClaudeMultiAccountLauncher\Assets\</DefineConstants>
+    <!-- ICE validation needs admin on some machines; the package is checked by install tests instead -->
+    <SuppressValidation>true</SuppressValidation>
+  </PropertyGroup>
+
+  <Target Name="RequirePublishedExe" BeforeTargets="Build">
+    <Error Condition="!Exists('$(PublishDir)claude-multi-account-launcher.exe')"
+           Text="$(PublishDir)claude-multi-account-launcher.exe not found. Run tools/build-release.ps1." />
+  </Target>
+
+</Project>

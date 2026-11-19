@@ -1,0 +1,67 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <!--
+    Per-user install, no admin rights (spec section 6):
+    %LOCALAPPDATA%\Programs\claude-multi-account-launcher\claude-multi-account-launcher.exe
+    plus a Start menu shortcut and an entry in Settings > Apps.
+    Profiles and their folders are user data and are left alone on uninstall.
+  -->
+  <Package
+      Name="Claude Multi-Account Launcher"
+      Manufacturer="claude-multi-account-launcher"
+      Version="$(Version)"
+      UpgradeCode="{01B9B86C-279A-46EE-A998-5AC108B551E9}"
+      Scope="perUser"
+      Compressed="yes">
+
+    <!-- Installing a newer version replaces the old one; never two entries in Apps -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="AppIcon.ico" SourceFile="$(AssetsDir)AppIcon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/weehong-1/claude-multi-account-launcher" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsDir" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="claude-multi-account-launcher" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Per-user components need an HKCU value as their key path -->
+    <!-- Fixed GUID: a component with a file and a registry key path can't have a generated one -->
+    <Component Id="MainExe" Directory="INSTALLFOLDER" Guid="{25B192BB-BA5B-49BA-848D-FD880A44AB73}">
+      <File Id="MainExe" Source="$(PublishDir)claude-multi-account-launcher.exe" KeyPath="no" />
+      <RegistryValue Root="HKCU" Key="Software\claude-multi-account-launcher" Name="InstallFolder"
+                     Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+      <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+      <!-- Only removed if empty: other apps share %LOCALAPPDATA%\Programs -->
+      <RemoveFolder Id="RemoveProgramsDir" Directory="ProgramsDir" On="uninstall" />
+    </Component>
+
+    <Component Id="StartMenuShortcut" Directory="ProgramMenuFolder">
+      <Shortcut Id="StartMenuShortcut"
+                Name="Claude Multi-Account Launcher"
+                Description="Run several Claude Desktop accounts side by side"
+                Target="[INSTALLFOLDER]claude-multi-account-launcher.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RegistryValue Root="HKCU" Key="Software\claude-multi-account-launcher" Name="StartMenuShortcut"
+                     Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- Open the launcher when an interactive install or upgrade finishes -->
+    <CustomAction Id="LaunchApp" Directory="INSTALLFOLDER"
+                  ExeCommand="&quot;[INSTALLFOLDER]claude-multi-account-launcher.exe&quot;"
+                  Return="asyncNoWait" Impersonate="yes" />
+    <InstallExecuteSequence>
+      <Custom Action="LaunchApp" After="InstallFinalize" Condition="NOT REMOVE AND UILevel &gt;= 4" />
+    </InstallExecuteSequence>
+
+    <Feature Id="Main">
+      <ComponentRef Id="MainExe" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+  </Package>
+</Wix>

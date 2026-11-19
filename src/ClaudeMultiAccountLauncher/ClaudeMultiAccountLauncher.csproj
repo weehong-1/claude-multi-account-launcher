@@ -15,7 +15,8 @@
     <Product>Claude Multi-Account Launcher</Product>
     <AssemblyTitle>Claude Multi-Account Launcher</AssemblyTitle>
     <Description>Unofficial launcher that runs several Claude Desktop accounts side by side.</Description>
-    <Version>0.1.0</Version>
+    <!-- Version comes from Directory.Build.props -->
+
     <ImplicitUsings>enable</ImplicitUsings>
 
     <Platforms>x64</Platforms>
