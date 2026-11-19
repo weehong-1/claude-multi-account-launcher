@@ -41,4 +41,11 @@ public sealed class LauncherPaths
 
     /// <summary><c>%USERPROFILE%\.claude-&lt;slug&gt;</c>, passed as CLAUDE_CONFIG_DIR.</summary>
     public string ConfigFolder(string slug) => Path.Combine(UserProfile, ".claude-" + slug);
+
+    /// <summary>
+    /// Where MSIX Claude puts the data folder if it was missing when Claude started
+    /// (spec section 2). Only exists if Claude was ever launched without the launcher's help.
+    /// </summary>
+    public string RedirectedDataFolder(string slug) => Path.Combine(
+        LocalAppData, "Packages", Claude.MsixPackage.FamilyName, "LocalCache", "Roaming", "Claude-" + slug);
 }

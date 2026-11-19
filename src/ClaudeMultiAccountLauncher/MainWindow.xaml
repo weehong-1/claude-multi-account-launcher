@@ -3,27 +3,23 @@
     x:Class="ClaudeMultiAccountLauncher.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ClaudeMultiAccountLauncher"
     Title="Claude Multi-Account Launcher">
 
     <Window.SystemBackdrop>
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid>
+    <Grid x:Name="Root">
         <Grid.Resources>
-            <FontFamily x:Key="MonoFont">JetBrains Mono</FontFamily>
-            <Style x:Key="LabelStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}" />
-            <Style x:Key="PathStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
-                <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-                <Setter Property="FontSize" Value="12" />
-                <Setter Property="IsTextSelectionEnabled" Value="True" />
-                <Setter Property="TextWrapping" Value="Wrap" />
-            </Style>
+            <FontFamily x:Key="MonoFont">JetBrains Mono, Cascadia Mono, Consolas</FontFamily>
         </Grid.Resources>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Custom title bar: content extends into it, Mica shows through -->
@@ -34,63 +30,130 @@
                 Text="Claude Multi-Account Launcher" />
         </Grid>
 
-        <ScrollViewer Grid.Row="1">
-            <StackPanel Padding="24,8,24,24" Spacing="16">
-                <Grid>
-                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Diagnostics" />
-                    <Button
-                        x:Name="RefreshButton"
-                        HorizontalAlignment="Right"
-                        Click="RefreshButton_Click"
-                        Content="Refresh" />
-                </Grid>
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Phase 1 check of what the launcher sees. The profile list replaces this in Phase 2. Refreshes when the window gets focus."
-                    TextWrapping="Wrap" />
+        <StackPanel
+            Grid.Row="1"
+            Padding="24,8,24,12"
+            Spacing="12">
+            <Grid>
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Profiles" />
+                <Button
+                    x:Name="AddButton"
+                    HorizontalAlignment="Right"
+                    AutomationProperties.Name="Add profile"
+                    Click="AddButton_Click"
+                    Style="{StaticResource AccentButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                        <TextBlock Text="Add profile" />
+                    </StackPanel>
+                </Button>
+            </Grid>
 
-                <InfoBar
-                    x:Name="ErrorBar"
-                    IsClosable="False"
-                    IsOpen="False"
-                    Severity="Error" />
+            <InfoBar
+                x:Name="ErrorBar"
+                IsOpen="False"
+                Severity="Error" />
+        </StackPanel>
 
-                <StackPanel Spacing="4">
-                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Claude Desktop" />
-                    <TextBlock Style="{StaticResource LabelStyle}" Text="Install type" />
-                    <TextBlock x:Name="InstallKindText" Text="…" />
-                    <TextBlock Style="{StaticResource LabelStyle}" Text="Launch path" />
-                    <TextBlock x:Name="LaunchPathText" Style="{StaticResource PathStyle}" Text="…" />
-                    <TextBlock Style="{StaticResource LabelStyle}" Text="Install folder (process filter)" />
-                    <TextBlock x:Name="InstallFolderText" Style="{StaticResource PathStyle}" Text="…" />
-                </StackPanel>
+        <ScrollViewer Grid.Row="2">
+            <ItemsRepeater x:Name="ProfileList" Margin="24,0,24,24">
+                <ItemsRepeater.Layout>
+                    <StackLayout Spacing="8" />
+                </ItemsRepeater.Layout>
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate x:DataType="local:ProfileRow">
+                        <Grid
+                            Padding="16,12"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            ColumnSpacing="12"
+                            CornerRadius="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                <StackPanel Spacing="4">
-                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Profiles file" />
-                    <TextBlock x:Name="ProfilesFileText" Style="{StaticResource PathStyle}" Text="…" />
-                    <TextBlock x:Name="ProfilesCountText" Text="…" />
-                </StackPanel>
-
-                <StackPanel Spacing="4">
-                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Running Claude Desktop instances" />
-                    <TextBlock x:Name="RunningSummaryText" Text="…" />
-                    <ItemsControl x:Name="RunningList">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
                                 <TextBlock
-                                    Margin="0,2"
-                                    Style="{StaticResource PathStyle}"
-                                    Text="{x:Bind}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <TextBlock
-                        x:Name="IgnoredText"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="…"
-                        TextWrapping="Wrap" />
-                </StackPanel>
-            </StackPanel>
+                                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                                    Text="{x:Bind Name, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Grid Width="8" Height="8" VerticalAlignment="Center">
+                                        <Ellipse Fill="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind IsRunning, Mode=OneWay}" />
+                                        <Ellipse Fill="{ThemeResource SystemFillColorCautionBrush}" Visibility="{x:Bind IsNotSignedIn, Mode=OneWay}" />
+                                        <Ellipse Fill="{ThemeResource ControlStrongFillColorDefaultBrush}" Visibility="{x:Bind IsReady, Mode=OneWay}" />
+                                    </Grid>
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Text="{x:Bind StatusText, Mode=OneWay}" />
+                                </StackPanel>
+                                <TextBlock
+                                    FontFamily="{StaticResource MonoFont}"
+                                    FontSize="11"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    IsTextSelectionEnabled="True"
+                                    Text="{x:Bind FolderText}"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTipService.ToolTip="{x:Bind FolderText}" />
+                            </StackPanel>
+
+                            <Button
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Click="LaunchButton_Click"
+                                Content="Launch"
+                                IsEnabled="{x:Bind CanLaunch, Mode=OneWay}"
+                                Tag="{x:Bind}" />
+
+                            <Button
+                                Grid.Column="2"
+                                VerticalAlignment="Center"
+                                AutomationProperties.Name="More options"
+                                Content="&#xE712;"
+                                FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                ToolTipService.ToolTip="More options"
+                                Visibility="{x:Bind IsCustom}">
+                                <Button.Flyout>
+                                    <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                        <MenuFlyoutItem
+                                            Click="RenameMenu_Click"
+                                            Tag="{x:Bind}"
+                                            Text="Rename">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="&#xE8AC;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutSeparator />
+                                        <MenuFlyoutItem
+                                            Click="RemoveMenu_Click"
+                                            IsEnabled="{x:Bind CanRemove, Mode=OneWay}"
+                                            Tag="{x:Bind}"
+                                            Text="Remove">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="&#xE74D;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                            </Button>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
         </ScrollViewer>
+
+        <TextBlock
+            x:Name="FooterText"
+            Grid.Row="3"
+            Margin="24,0,24,12"
+            FontFamily="{StaticResource MonoFont}"
+            FontSize="11"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            IsTextSelectionEnabled="True"
+            TextTrimming="CharacterEllipsis" />
     </Grid>
 </Window>
