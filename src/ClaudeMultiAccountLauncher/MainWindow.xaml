@@ -53,6 +53,16 @@
                 x:Name="ErrorBar"
                 IsOpen="False"
                 Severity="Error" />
+
+            <InfoBar
+                x:Name="BusyBar"
+                IsClosable="False"
+                IsOpen="False"
+                Severity="Informational">
+                <InfoBar.Content>
+                    <ProgressBar Margin="0,0,0,12" IsIndeterminate="True" />
+                </InfoBar.Content>
+            </InfoBar>
         </StackPanel>
 
         <ScrollViewer Grid.Row="2">
@@ -125,6 +135,15 @@
                                             Text="Rename">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon Glyph="&#xE8AC;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem
+                                            Click="ResetSignInMenu_Click"
+                                            IsEnabled="{x:Bind CanResetSignIn, Mode=OneWay}"
+                                            Tag="{x:Bind}"
+                                            Text="Reset to Not signed in yet">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="&#xE72C;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                         <MenuFlyoutSeparator />
