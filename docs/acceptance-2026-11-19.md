@@ -4,7 +4,7 @@
 - Against: [spec section 7](spec-2026-11-19-claude-multi-account-launcher.md#7-acceptance-criteria)
 - Build: branch `feat/launcher`, Windows 11 Pro 10.0.26300, Claude
   Desktop MSIX 6.6395.0.0, .NET SDK 11.0.100, Windows App SDK 2.7.0
-- Automated tests: 87 passing (`dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests`)
+- Automated tests: 90 passing (`dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests`)
 - Revised 2026-11-19 after FR-4 was rewritten (email sign-in, nothing
   closed, no stored status)
 
@@ -23,7 +23,7 @@ How each item was checked:
 | 4 | Claude Code sessions in "Personal" write to `.claude-personal` | **Not verified** | Spike confirmed `CLAUDE_CONFIG_DIR` reaches the Claude process through the MSIX alias; no Claude Code session has been run in a profile yet |
 | 5 | Desktop shortcut for "Personal" opens that profile in one click | Pass | UI run (Phase 4): shortcut created from the menu; double-clicking the Default shortcut started Claude with no launcher window, in about 1 s. Profile path: tests |
 | 6 | Shortcut icon still shows after a Claude Desktop update | **Open** | Design only: the icon is a copy in `%APPDATA%\claude-multi-account-launcher\claude.ico`, not a path into the versioned MSIX folder; tests confirm the copy is reused when Claude can't be found. Needs a real Claude update to confirm |
-| 7 | Running profiles show `Running`; closing Claude clears it on next window focus | Pass | UI run (Phase 2): launched a profile, row showed Running; closed it, refocused, row went back |
+| 7 | Running profiles show `Running`; when Claude exits it clears without refocusing the launcher | Pass | UI run 2026-11-19 with the launcher in the background: a profile started outside the launcher showed Running after 2.6 s; after its process ended the row showed Not running 0.21 s later; tests for the exit watcher |
 | 8 | Removing a profile keeps its folders unless deletion is confirmed | Pass | Tests (keep by default, delete, locked-file reporting); UI run: "Keep folders" is the default button, Delete removed all folders |
 | 9 | Works on both MSIX and standalone installs | **Partly** | MSIX: everything above. Standalone: lookup order and process matching covered by tests only; no standalone install was available |
 | 10 | The Claude Code CLI is never counted as a running profile | Pass | Read-only run against all real `claude.exe` processes: 15 Desktop processes picked, 3 CLI processes excluded; tests. (The launcher no longer closes any process, so the old "CLI survives a close" check no longer applies) |

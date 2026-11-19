@@ -25,10 +25,14 @@ public sealed partial class MainWindow : Window
         Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
         Environment.ProcessPath ?? string.Empty);
 
+    private readonly ProcessExitWatcher _exitWatcher = new();
+    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _poll;
+
     private ClaudeInstall? _install;
     private string? _installError;
     private string? _storeError;
     private bool _refreshing;
+    private bool _refreshAgain;
     private StartupAction? _pendingStartup;
 
     public MainWindow(StartupAction? startup = null)
@@ -56,7 +60,8 @@ public sealed partial class MainWindow : Window
 
         LoadProfiles();
 
-        // FR-7: refresh when the window gets focus
+        // FR-7, live: refresh on focus; the moment a running Claude exits; and every few
+        // seconds while the window is on screen, to catch Claude started elsewhere.
         Activated += (_, e) =>
         {
             if (e.WindowActivationState != WindowActivationState.Deactivated)
@@ -64,7 +69,32 @@ public sealed partial class MainWindow : Window
                 _ = OnActivatedAsync();
             }
         };
+
+        _exitWatcher.Exited += exitedPid => DispatcherQueue.TryEnqueue(() => _ = RefreshAsync());
+
+        _poll = DispatcherQueue.CreateTimer();
+        _poll.Interval = TimeSpan.FromSeconds(3);
+        _poll.Tick += (_, _) =>
+        {
+            if (IsOnScreen())
+            {
+                _ = RefreshAsync();
+            }
+        };
+        _poll.Start();
+
+        Closed += (_, _) =>
+        {
+            _poll.Stop();
+            _exitWatcher.Dispose();
+        };
     }
+
+    /// <summary>No polling while minimized or hidden; focus or an exit still refreshes.</summary>
+    private bool IsOnScreen() =>
+        AppWindow.IsVisible
+        && (AppWindow.Presenter is not Microsoft.UI.Windowing.OverlappedPresenter presenter
+            || presenter.State != Microsoft.UI.Windowing.OverlappedPresenterState.Minimized);
 
     private async Task OnActivatedAsync()
     {
@@ -106,29 +136,38 @@ public sealed partial class MainWindow : Window
     {
         if (_refreshing)
         {
+            // A Claude exited mid-refresh: run once more afterwards so it isn't missed.
+            _refreshAgain = true;
             return;
         }
 
         _refreshing = true;
         try
         {
-            // Package lookup and WMI are slow-ish; keep them off the UI thread.
-            var (install, error, running) = await Task.Run(() =>
+            do
             {
-                try
-                {
-                    var found = new ClaudeLocator(_paths, new SystemInstallProbe()).Locate();
-                    return (found, (string?)null, _scanner.RunningInstances(found));
-                }
-                catch (ClaudeNotFoundException ex)
-                {
-                    return ((ClaudeInstall?)null, ex.Message, (IReadOnlyList<RunningInstance>)[]);
-                }
-            });
+                _refreshAgain = false;
 
-            _install = install;
-            _installError = error;
-            SyncRows(running);
+                // Package lookup and WMI are slow-ish; keep them off the UI thread.
+                var (install, error, running) = await Task.Run(() =>
+                {
+                    try
+                    {
+                        var found = new ClaudeLocator(_paths, new SystemInstallProbe()).Locate();
+                        return (found, (string?)null, _scanner.RunningInstances(found));
+                    }
+                    catch (ClaudeNotFoundException ex)
+                    {
+                        return ((ClaudeInstall?)null, ex.Message, (IReadOnlyList<RunningInstance>)[]);
+                    }
+                });
+
+                _install = install;
+                _installError = error;
+                SyncRows(running);
+                _exitWatcher.Watch(running.Select(r => r.ProcessId));
+            }
+            while (_refreshAgain);
         }
         finally
         {
