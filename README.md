@@ -30,6 +30,18 @@ Download from [Releases](https://github.com/weehong-1/claude-multi-account-launc
 - To update, run the newer MSI; it replaces the old version
 - To uninstall, see [Uninstall](#uninstall)
 
+**Install or reinstall in one command** (PowerShell; downloads the latest
+release's MSI and runs it, closing the launcher first if it's open):
+
+```powershell
+$release = Invoke-RestMethod https://api.github.com/repos/weehong-1/claude-multi-account-launcher/releases/latest
+$msi = $release.assets | Where-Object name -like '*.msi' | Select-Object -First 1
+$file = Join-Path $env:TEMP $msi.name
+Invoke-WebRequest $msi.browser_download_url -OutFile $file
+Get-Process claude-multi-account-launcher -ErrorAction Ignore | Stop-Process
+Start-Process msiexec.exe -ArgumentList "/i `"$file`"" -Wait
+```
+
 **Portable:** download `claude-multi-account-launcher.exe` and put it in a
 folder it will stay in. Desktop shortcuts point at the exe's location, so
 if you move it, create the shortcuts again.
