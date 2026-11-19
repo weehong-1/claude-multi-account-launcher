@@ -4,5 +4,9 @@
   </Configurations>
   <Folder Name="/src/">
     <Project Path="src/ClaudeMultiAccountLauncher/ClaudeMultiAccountLauncher.csproj" />
+    <Project Path="src/ClaudeMultiAccountLauncher.Core/ClaudeMultiAccountLauncher.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ClaudeMultiAccountLauncher.Core.Tests/ClaudeMultiAccountLauncher.Core.Tests.csproj" />
   </Folder>
 </Solution>
