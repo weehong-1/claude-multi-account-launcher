@@ -15,20 +15,29 @@ Spec: [docs/spec-2026-11-19-claude-multi-account-launcher.md](docs/spec-2026-11-
 - Windows 10 2004 (19041) or later, x64
 - Claude Desktop, Microsoft Store (MSIX) or the older standalone install
 
-Nothing else. The exe bundles .NET and the Windows App SDK, needs no
-installer and no admin rights, and makes no network calls.
+Nothing else. The app bundles .NET and the Windows App SDK, needs no admin
+rights, and makes no network calls.
 
 ## Install
 
-Put `claude-multi-account-launcher.exe` in a folder it will stay in, for
-example:
+Download from [Releases](https://github.com/weehong-1/claude-multi-account-launcher/releases/latest).
 
-```powershell
-New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Programs\claude-multi-account-launcher"
-```
+**Installer (recommended):** run `claude-multi-account-launcher-<version>-x64.msi`.
 
-Desktop shortcuts point at the exe's location. If you move it, create the
-shortcuts again.
+- Installs for your user only, no admin prompt, into
+  `%LOCALAPPDATA%\Programs\claude-multi-account-launcher\`
+- Adds **Claude Multi-Account Launcher** to the Start menu and opens it
+- To update, run the newer MSI; it replaces the old version
+- To uninstall: Settings → Apps → Installed apps. Your profiles, their
+  Claude data and desktop shortcuts are left in place; remove profiles in
+  the launcher first if you want those gone too
+
+**Portable:** download `claude-multi-account-launcher.exe` and put it in a
+folder it will stay in. Desktop shortcuts point at the exe's location, so
+if you move it, create the shortcuts again.
+
+The files aren't code-signed. The first time, Windows SmartScreen may say
+"Windows protected your PC": choose **More info → Run anyway**.
 
 ## Use
 
@@ -102,6 +111,23 @@ Single self-contained exe (about 70 MB, compressed):
 dotnet publish src/ClaudeMultiAccountLauncher -c Release -o artifacts/publish
 ```
 
+### Release
+
+1. Bump `<Version>` in `Directory.Build.props` (the app and the MSI share it).
+2. Build the release files. This runs the tests, publishes the exe and
+   builds the MSI with WiX 5 from NuGet; nothing else to install:
+
+   ```powershell
+   pwsh tools/build-release.ps1
+   ```
+
+   Output in `artifacts/release`: `claude-multi-account-launcher-<version>-x64.msi`
+   and `claude-multi-account-launcher.exe`.
+3. Commit, tag `v<version>`, and attach both files to a GitHub Release.
+
+Keep the `UpgradeCode` in `installer/Package.wxs` unchanged forever;
+it's what lets a new MSI replace the old one.
+
 Don't turn on trimming or Native AOT: WMI process lookup and `.lnk`
 writing use built-in COM.
 
@@ -146,6 +172,8 @@ ssh -T git@toy.github.com
 | `src/ClaudeMultiAccountLauncher.Core` | Everything testable: profiles, Claude lookup, process scan/close, launch, shortcuts, icons |
 | `src/ClaudeMultiAccountLauncher` | WinUI 3 window and startup (`--launch`) |
 | `tests/ClaudeMultiAccountLauncher.Core.Tests` | xUnit v3 tests |
+| `installer` | Per-user MSI (WiX 5): `Package.wxs` |
+| `tools/build-release.ps1` | Tests, publishes and builds the MSI into `artifacts/release` |
 | `tools/make-icon.ps1` | Draws the launcher icon (`Assets/AppIcon.ico`) |
 
 ## Third-party
