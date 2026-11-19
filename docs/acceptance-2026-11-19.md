@@ -4,7 +4,7 @@
 - Against: [spec section 7](spec-2026-11-19-claude-multi-account-launcher.md#7-acceptance-criteria)
 - Build: branch `feat/launcher`, Windows 11 Pro 10.0.26300, Claude
   Desktop MSIX 6.6395.0.0, .NET SDK 11.0.100, Windows App SDK 2.7.0
-- Automated tests: 90 passing (`dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests`)
+- Automated tests: 100 passing (`dotnet test --project tests/ClaudeMultiAccountLauncher.Core.Tests`)
 - Revised 2026-11-19 after FR-4 was rewritten (email sign-in, nothing
   closed, no stored status)
 
@@ -26,6 +26,7 @@ How each item was checked:
 | 7 | Running profiles show `Running`; when Claude exits it clears without refocusing the launcher | Pass | UI run 2026-11-19 with the launcher in the background: a profile started outside the launcher showed Running after 2.6 s; after its process ended the row showed Not running 0.21 s later; tests for the exit watcher |
 | 8 | Removing a profile keeps its folders unless deletion is confirmed | Pass | Tests (keep by default, delete, locked-file reporting); UI run: "Keep folders" is the default button, Delete removed all folders |
 | 9 | Works on both MSIX and standalone installs | **Partly** | MSIX: everything above. Standalone: lookup order and process matching covered by tests only; no standalone install was available |
+| 11 | `Uninstall and remove everything…` removes every listed item and the installed app, and leaves Default untouched | Pass | Tests (10, incl. a bug they caught: the launcher's own folder matched the old-profile pattern). On this PC: real plan listed exactly the profile's two folders, the launcher folder, the MSI and the temp runtime, without Default; UI refused while a profile was running; deletion run on a temp copy, then the real after-exit command uninstalled the installed MSI (Apps entry, exe, Start menu shortcut gone) and removed the runtime folder, with the real profile data untouched |
 | 10 | The Claude Code CLI is never counted as a running profile | Pass | Read-only run against all real `claude.exe` processes: 15 Desktop processes picked, 3 CLI processes excluded; tests. (The launcher no longer closes any process, so the old "CLI survives a close" check no longer applies) |
 
 ## Clean-PC test (Windows Sandbox, v0.1.0 release files)

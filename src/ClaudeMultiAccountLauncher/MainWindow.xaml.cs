@@ -4,6 +4,7 @@ using ClaudeMultiAccountLauncher.Core.Claude;
 using ClaudeMultiAccountLauncher.Core.Profiles;
 using ClaudeMultiAccountLauncher.Core.Shortcuts;
 using ClaudeMultiAccountLauncher.Core.Startup;
+using ClaudeMultiAccountLauncher.Core.Uninstall;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Graphics;
@@ -426,6 +427,127 @@ public sealed partial class MainWindow : Window
         {
             ShowErrors(string.Join(Environment.NewLine + Environment.NewLine, problems));
         }
+    }
+
+    // ---------- Uninstall and remove everything (FR-9) ----------
+
+    private async void UninstallMenu_Click(object sender, RoutedEventArgs e)
+    {
+        // Deleting a profile's folders while its Claude is open would fail or corrupt it.
+        await RefreshAsync();
+        var running = _rows.Where(r => r.IsCustom && r.IsRunning).Select(r => r.Name).ToList();
+        if (running.Count > 0)
+        {
+            await NewDialog(
+                "Close these Claude windows first",
+                MonoList("These profiles are still running. Close their Claude windows (or quit Claude from the tray), then try again:", running),
+                primary: "OK",
+                close: null).ShowAsync();
+            return;
+        }
+
+        var uninstaller = new Uninstaller(_paths, _shortcuts, new MsiInstalledProduct());
+        var plan = await Task.Run(() => uninstaller.Plan(_profiles.Profiles, Environment.ProcessPath, AppContext.BaseDirectory));
+
+        var oldFolders = new CheckBox { Content = "Also delete these folders that look like old profiles:" };
+        var dialog = NewDialog(
+            "Uninstall and remove everything?",
+            new ScrollViewer { MaxHeight = 420, Content = UninstallSummary(plan, oldFolders) },
+            primary: "Remove everything",
+            close: "Cancel");
+        dialog.DefaultButton = ContentDialogButton.Close; // Enter must not delete accounts
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        _poll.Stop();
+        var failed = uninstaller.DeleteData(plan, oldFolders.IsChecked == true);
+        if (failed.Count > 0)
+        {
+            await NewDialog(
+                "Some things couldn't be deleted",
+                MonoList("They may be in use. Delete them by hand:", failed),
+                primary: "OK",
+                close: null).ShowAsync();
+        }
+
+        if (plan.PortableExe is not null)
+        {
+            await NewDialog(
+                "Delete the launcher file",
+                MonoList("Everything else is removed. The launcher can't delete the file it runs from; delete it yourself once this window closes:", new[] { plan.PortableExe }),
+                primary: "OK",
+                close: null).ShowAsync();
+        }
+
+        // After we exit: uninstall the MSI (if installed) and remove the unpacked runtime.
+        if (uninstaller.FinishCommand(plan) is { } finish)
+        {
+            try
+            {
+                using var _ = System.Diagnostics.Process.Start(finish);
+            }
+            catch (Exception ex) when (ex is Win32Exception or IOException)
+            {
+                // Data is already gone; the app itself can still be removed from Settings > Apps.
+            }
+        }
+
+        Application.Current.Exit();
+    }
+
+    private StackPanel UninstallSummary(UninstallPlan plan, CheckBox oldFolders)
+    {
+        var panel = new StackPanel { Spacing = 12 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "This removes Claude Multi-Account Launcher and everything it created on this PC. "
+                + "The profiles' sign-ins, chats and Claude Code settings are deleted and can't be recovered. "
+                + "Your Default Claude and its data are not touched.",
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        void Section(string title, IEnumerable<string> lines)
+        {
+            var list = lines.ToList();
+            if (list.Count > 0)
+            {
+                panel.Children.Add(MonoList(title, list));
+            }
+        }
+
+        Section("Profiles' Claude data and Claude Code settings:", plan.Items
+            .Where(i => i.Kind is UninstallItemKind.ProfileData or UninstallItemKind.ProfileConfig)
+            .Select(i => $"{i.ProfileName}: {i.Path}"));
+        Section("Desktop shortcuts:", plan.Items.Where(i => i.Kind == UninstallItemKind.DesktopShortcut).Select(i => i.Path));
+        Section("Launcher settings:", plan.Items.Where(i => i.Kind == UninstallItemKind.LauncherData).Select(i => i.Path));
+
+        var afterExit = new List<string>();
+        if (plan.ProductCode is not null)
+        {
+            afterExit.Add("The installed app (Settings > Apps entry, Start menu shortcut)");
+        }
+
+        if (plan.ExtractionRoot is not null)
+        {
+            afterExit.Add(plan.ExtractionRoot);
+        }
+
+        Section("After the launcher closes:", afterExit);
+
+        if (plan.PortableExe is not null)
+        {
+            Section("You delete this file yourself afterwards:", new[] { plan.PortableExe });
+        }
+
+        if (plan.OldProfileFolders.Count > 0)
+        {
+            panel.Children.Add(oldFolders);
+            panel.Children.Add(MonoList("Not in the profile list, so not deleted unless ticked:", plan.OldProfileFolders.Select(i => i.Path)));
+        }
+
+        return panel;
     }
 
     // ---------- Desktop shortcut (FR-8) ----------

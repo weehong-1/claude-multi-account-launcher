@@ -26,22 +26,31 @@ public sealed class ShortcutService(string desktopFolder, string launcherExePath
     /// <summary>Our shortcut for <paramref name="slug"/>, whatever it is called now, or null.</summary>
     public string? Find(string slug)
     {
+        var wanted = ArgumentsFor(slug);
+        return Ours().FirstOrDefault(s => string.Equals(s.Info.Arguments.Trim(), wanted, StringComparison.OrdinalIgnoreCase)).Path;
+    }
+
+    /// <summary>
+    /// Every "Claude - *" shortcut this launcher made, including ones for profiles removed
+    /// since. Used by the full uninstall.
+    /// </summary>
+    public IReadOnlyList<string> FindAll() => Ours().Select(s => s.Path).ToList();
+
+    private IEnumerable<(string Path, ShellLinkInfo Info)> Ours()
+    {
         if (!Directory.Exists(DesktopFolder))
         {
-            return null;
+            yield break;
         }
 
-        var wanted = ArgumentsFor(slug);
         foreach (var lnk in Directory.EnumerateFiles(DesktopFolder, NamePrefix + "*.lnk"))
         {
             var info = TryRead(lnk);
-            if (info is not null && IsOurs(info) && string.Equals(info.Arguments.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
+            if (info is not null && IsOurs(info) && info.Arguments.TrimStart().StartsWith(StartupCommand.LaunchSwitch, StringComparison.OrdinalIgnoreCase))
             {
-                return lnk;
+                yield return (lnk, info);
             }
         }
-
-        return null;
     }
 
     /// <summary>
