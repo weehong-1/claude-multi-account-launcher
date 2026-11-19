@@ -114,6 +114,14 @@ because Google sign-in always returns to Default (section 2).
 - `Open Claude` launches the profile per FR-3. The user signs in there
 - Nothing is ever closed, and there is no "signed in?" question. Launch
   works the same for every profile, first time or not
+- Email is the supported way; Google sign-in in a profile is not.
+  Tried and dropped 2026-11-19:
+  - Copying the callback from the browser and handing it to the profile:
+    the sign-in page's `Open Claude` is a script button, not a link, so
+    there is nothing to copy
+  - Making the launcher the `claude://` handler: needs every user to
+    change a Windows default-app setting by hand (Windows doesn't let
+    apps set it), too many steps for a simple tool
 
 ### FR-5 Rename and remove
 
