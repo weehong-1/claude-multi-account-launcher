@@ -43,6 +43,13 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
 
+        // Taskbar and Alt+Tab icon. The exe also embeds it (ApplicationIcon) for Explorer.
+        var icon = Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico");
+        if (File.Exists(icon))
+        {
+            AppWindow.SetIcon(icon);
+        }
+
         // AppWindow sizes are in physical pixels; scale the logical size by the monitor DPI.
         var scale = GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(this)) / 96.0;
         AppWindow.Resize(new SizeInt32((int)(DefaultWidth * scale), (int)(DefaultHeight * scale)));
