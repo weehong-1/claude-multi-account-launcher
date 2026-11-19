@@ -105,6 +105,40 @@ dotnet publish src/ClaudeMultiAccountLauncher -c Release -o artifacts/publish
 Don't turn on trimming or Native AOT: WMI process lookup and `.lnk`
 writing use built-in COM.
 
+## Git over SSH
+
+This repo belongs to the `weehong-1` GitHub account. On a machine where
+the default `github.com` SSH key belongs to another account, a push fails
+with "Could not read from remote repository". Use the `toy.github.com`
+host alias, which connects to GitHub with `weehong-1`'s key.
+
+The alias in `~/.ssh/config` (here it lives in `~/.ssh/config.d/git`):
+
+```
+Host toy.github.com
+    Hostname github.com
+    User git
+    IdentityFile ~/.ssh/keys/git/github_toy
+```
+
+Clone through the alias:
+
+```powershell
+git clone git@toy.github.com:weehong-1/claude-multi-account-launcher.git
+```
+
+Or switch an existing clone to it:
+
+```powershell
+git remote set-url origin git@toy.github.com:weehong-1/claude-multi-account-launcher.git
+```
+
+Check which account the alias signs in as. It should greet `weehong-1`:
+
+```powershell
+ssh -T git@toy.github.com
+```
+
 ## Layout
 
 | Path | What |
