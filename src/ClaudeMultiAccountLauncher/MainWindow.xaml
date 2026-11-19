@@ -55,6 +55,11 @@
                 Severity="Error" />
 
             <InfoBar
+                x:Name="NoticeBar"
+                IsOpen="False"
+                Severity="Success" />
+
+            <InfoBar
                 x:Name="BusyBar"
                 IsClosable="False"
                 IsOpen="False"
@@ -125,14 +130,23 @@
                                 AutomationProperties.Name="More options"
                                 Content="&#xE712;"
                                 FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                                ToolTipService.ToolTip="More options"
-                                Visibility="{x:Bind IsCustom}">
+                                ToolTipService.ToolTip="More options">
                                 <Button.Flyout>
                                     <MenuFlyout Placement="BottomEdgeAlignedRight">
                                         <MenuFlyoutItem
+                                            Click="ShortcutMenu_Click"
+                                            Tag="{x:Bind}"
+                                            Text="Create desktop shortcut">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="&#xE71B;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutSeparator Visibility="{x:Bind IsCustom}" />
+                                        <MenuFlyoutItem
                                             Click="RenameMenu_Click"
                                             Tag="{x:Bind}"
-                                            Text="Rename">
+                                            Text="Rename"
+                                            Visibility="{x:Bind IsCustom}">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon Glyph="&#xE8AC;" />
                                             </MenuFlyoutItem.Icon>
@@ -141,17 +155,19 @@
                                             Click="ResetSignInMenu_Click"
                                             IsEnabled="{x:Bind CanResetSignIn, Mode=OneWay}"
                                             Tag="{x:Bind}"
-                                            Text="Reset to Not signed in yet">
+                                            Text="Reset to Not signed in yet"
+                                            Visibility="{x:Bind IsCustom}">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon Glyph="&#xE72C;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
-                                        <MenuFlyoutSeparator />
+                                        <MenuFlyoutSeparator Visibility="{x:Bind IsCustom}" />
                                         <MenuFlyoutItem
                                             Click="RemoveMenu_Click"
                                             IsEnabled="{x:Bind CanRemove, Mode=OneWay}"
                                             Tag="{x:Bind}"
-                                            Text="Remove">
+                                            Text="Remove"
+                                            Visibility="{x:Bind IsCustom}">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon Glyph="&#xE74D;" />
                                             </MenuFlyoutItem.Icon>

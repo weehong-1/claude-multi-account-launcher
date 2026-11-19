@@ -19,6 +19,14 @@ public enum InstallKind
 public sealed record ClaudeInstall(InstallKind Kind, string LaunchPath, string InstallFolder)
 {
     /// <summary>
+    /// The real Claude exe to copy the icon from. For MSIX this is inside the versioned package
+    /// folder, which is deleted on update, so never point a shortcut at it directly (FR-8).
+    /// </summary>
+    public string IconSourcePath => Kind == InstallKind.Msix
+        ? Path.Combine(InstallFolder, MsixPackage.RelativeExePath)
+        : LaunchPath;
+
+    /// <summary>
     /// True when <paramref name="executablePath"/> is Claude Desktop from this install.
     /// For MSIX any version of the package matches, so a process still running from the
     /// previous version right after an update is still recognised.
