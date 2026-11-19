@@ -80,10 +80,14 @@ with one click, instead of running commands or batch files by hand.
 ### FR-4 First sign-in flow
 
 - When launching a `Not signed in yet` profile:
-  1. If any `Claude` process is running, show a dialog explaining that
-     all Claude windows must close for sign-in to work, with
+  1. If any Claude Desktop process is running, show a dialog explaining
+     that all Claude windows must close for sign-in to work, with
      buttons `Close Claude and continue` / `Cancel`
-  2. On confirm, end all `Claude` processes, wait until they are gone
+  2. On confirm, end all Claude Desktop processes, wait until they are
+     gone
+     - Identify them by executable path (the resolved Claude Desktop
+       install folder from FR-6), never by process name alone: the
+       Claude Code CLI is also `claude.exe` and must not be killed
   3. Launch the new profile only
   4. Show a dialog: "Signed in successfully?" `Yes` / `Not yet`
   5. `Yes` sets status to `Ready`
@@ -104,8 +108,9 @@ with one click, instead of running commands or batch files by hand.
 
 ### FR-7 Running indicator
 
-- Detect running profiles by reading `Claude` process command lines
-  for `--user-data-dir=<data folder>`
+- Detect running profiles by reading Claude Desktop process command
+  lines (same executable-path filter as FR-4) for
+  `--user-data-dir=<data folder>`; no flag means Default
 - Refresh when the window gets focus
 
 ### FR-8 Desktop shortcut (per profile, user chooses)
@@ -147,6 +152,7 @@ with one click, instead of running commands or batch files by hand.
       next window focus
 - [ ] Removing a profile keeps its folders unless deletion is confirmed
 - [ ] Works on both MSIX and standalone installs
+- [ ] FR-4 leaves a running Claude Code CLI session untouched
 
 ## 8. Known risks
 
