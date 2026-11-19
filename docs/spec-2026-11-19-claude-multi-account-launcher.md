@@ -165,7 +165,13 @@ with one click, instead of running commands or batch files by hand.
 
 ## 6. Non-functional
 
-- Single self-contained `.exe`, no installer, no admin rights
+- Single self-contained `.exe`, no admin rights
+- Distributed two ways on GitHub Releases (added 2026-11-19):
+  - Per-user MSI installer: installs to
+    `%LOCALAPPDATA%\Programs\claude-multi-account-launcher\`, adds a Start
+    menu shortcut and an Apps entry, upgrades in place, no admin rights.
+    Uninstall leaves profiles and their folders alone
+  - The portable `.exe` on its own
 - No network calls
 - Stack: WinUI 3 (Windows App SDK), C#, .NET 11
 - Unpackaged, self-contained (bundle the Windows App SDK runtime) so it
