@@ -86,6 +86,9 @@ public sealed partial class ProfileRow : INotifyPropertyChanged
     /// <summary>Removing is blocked while running so folders are never deleted under Claude.</summary>
     public bool CanRemove => IsCustom && !IsRunning;
 
+    /// <summary>Only a Ready profile can be put back to Not signed in yet.</summary>
+    public bool CanResetSignIn => _profile?.Status == ProfileStatus.Ready;
+
     private void OnStatusChanged()
     {
         OnPropertyChanged(nameof(IsRunning));
@@ -93,6 +96,7 @@ public sealed partial class ProfileRow : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsReady));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(CanRemove));
+        OnPropertyChanged(nameof(CanResetSignIn));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
